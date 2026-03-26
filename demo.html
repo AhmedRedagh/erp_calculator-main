@@ -352,40 +352,59 @@
       .line-inputs .field:nth-child(3) { display: none; } /* hide tax mode on tiny screens */
       .discount-row { grid-template-columns: 90px 1fr 1fr 1fr; }
     }
+
+    /* ── RTL Support ───────────────────────────────────────────────────── */
+    html[dir="rtl"] { font-family: 'Inter', system-ui, sans-serif; }
+    html[dir="rtl"] .line-inputs .field { border-right: none; border-left: 1px solid var(--border); }
+    html[dir="rtl"] .line-inputs .field:last-child { border-left: none; }
+    html[dir="rtl"] .field select { background-position: left 4px center; padding-right: 0px; padding-left: 16px; }
+    html[dir="rtl"] .global-row .tax-badge { margin-left: 0; margin-right: auto; }
+    html[dir="rtl"] .discount-row .field { border-right: none; border-left: 1px solid var(--border); }
+    html[dir="rtl"] .discount-row .field:last-child { border-left: none; }
+    html[dir="rtl"] .bd-row .field { border-right: none; border-left: 1px solid var(--border); }
+    html[dir="rtl"] .bd-row .field:last-child { border-left: none; }
+    html[dir="rtl"] .step-row .step-formula { margin-left: 0; margin-right: 8px; text-align: left; }
+    html[dir="rtl"] .step-row .step-value { text-align: left; }
+    html[dir="rtl"] .step-formula, html[dir="rtl"] .step-value { font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
 <body>
 
 <div class="page-header">
-  <h1>ERP Calculator <span>Demo</span></h1>
-  <p>Interactive tester for the <code>erp_calculator</code> Dart package · All calculations run live in your browser using a JS port of <code>BillingEngine</code></p>
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+    <div>
+      <h1><span data-i18n="headerTitle">ERP Calculator</span> <span><span data-i18n="headerDemo">Demo</span></span></h1>
+      <p data-i18n="headerDesc">Interactive tester for the <code>erp_calculator</code> Dart package · All calculations run live in your browser using a JS port of <code>BillingEngine</code></p>
+    </div>
+    <button id="langToggle" onclick="toggleLang()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-family: inherit; font-weight: 500;">عربي</button>
+  </div>
 </div>
 
 <!-- Global tax rate -->
 <div class="global-row">
-  <label for="globalTax">🌐 Global Tax Rate (%)</label>
+  <label for="globalTax" data-i18n="globalTaxRate">🌐 Global Tax Rate (%)</label>
   <input type="number" id="globalTax" value="15" min="0" max="100" step="0.5" />
-  <span class="tax-badge" id="taxBadge">15%</span>
+  <span class="tax-badge" id="taxBadge" dir="ltr">15%</span>
 </div>
 
 <!-- LINE ITEMS -->
-<div class="section-title">Line Items</div>
+<div class="section-title" data-i18n="lineItems">Line Items</div>
 <div class="items-wrapper" id="itemsWrapper"></div>
 
-<button class="btn-add" id="btnAddItem">＋ Add Line Item</button>
+<button class="btn-add" id="btnAddItem" data-i18n="additem">＋ Add Line Item</button>
 
 <!-- BILL-LEVEL DISCOUNTS -->
-<div class="section-title">Bill-Level Discounts</div>
+<div class="section-title" data-i18n="billDiscounts">Bill-Level Discounts</div>
 <div class="bill-disc-section">
   <div class="bd-header">
-    <span>Applied after all item calculations</span>
-    <button class="btn-add-disc" id="btnAddDisc">＋ Add discount</button>
+    <span data-i18n="appliedAfter">Applied after all item calculations</span>
+    <button class="btn-add-disc" id="btnAddDisc" data-i18n="addDiscount">＋ Add discount</button>
   </div>
   <div id="billDiscsWrapper"></div>
 </div>
 
 <!-- BILL SUMMARY -->
-<div class="section-title" style="margin-top:24px">Bill Summary</div>
+<div class="section-title" style="margin-top:24px" data-i18n="billSummary">Bill Summary</div>
 <div class="bill-summary" id="billSummary"></div>
 <div class="bill-audit" id="billAudit" style="display:none"></div>
 
@@ -393,6 +412,189 @@
 <!-- JS: Billing Engine Port + UI                                           -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <script>
+const i18n = {
+  en: {
+    headerTitle: "ERP Calculator",
+    headerDemo: "Demo",
+    headerDesc: "Interactive tester for the <code>erp_calculator</code> Dart package · All calculations run live in your browser using a JS port of <code>BillingEngine</code>",
+    globalTaxRate: "🌐 Global Tax Rate (%)",
+    lineItems: "Line Items",
+    additem: "＋ Add Line Item",
+    billDiscounts: "Bill-Level Discounts",
+    appliedAfter: "Applied after all item calculations",
+    addDiscount: "＋ Add discount",
+    billSummary: "Bill Summary",
+    name: "Name",
+    productName: "Product name",
+    qty: "Qty",
+    unitPrice: "Unit price",
+    taxMode: "Tax mode",
+    excl: "Excl. (add on top)",
+    incl: "Incl. (in price)",
+    none: "None",
+    itemDiscount: "Item discount",
+    type: "Type",
+    percentage: "% percentage",
+    fixedAmount: "Fixed amount",
+    applyOn: "Apply on",
+    grossWithTax: "Gross (with tax)",
+    netPreTax: "Net (pre-tax)",
+    grossTotal: "Gross total",
+    netTotal: "Net total",
+    overrideTax: "Override tax %",
+    global: "Global",
+    value: "Value",
+    subtotalNet: "Subtotal Net",
+    subtotalTax: "Subtotal Tax",
+    subtotalGross: "Subtotal Gross",
+    billDiscountLabel: "Bill Discount",
+    totalNet: "Total Net",
+    totalTax: "Total Tax",
+    totalGross: "Total Gross (customer pays)",
+    totalSaved: "🏷 Total Saved",
+    totals: "Totals",
+    discountTag: "(discount)",
+    atLeastOne: "At least one line item is required.",
+    
+    // Audit labels (English defaults are okay initially)
+    step1Base: "STEP 1 — BASE PRICE",
+    unitXqty: "Unit price × qty",
+    step2NoTax: "STEP 2 — NO TAX",
+    netEqGross: "Net = Gross = base",
+    step2Excl: "STEP 2 — TAX IS EXCLUSIVE (ADDED ON TOP)",
+    netAsIs: "Net = price as-is",
+    taxEq: "Tax = Net ×",
+    grossEq: "Gross = Net + Tax",
+    step2Incl: "STEP 2 — TAX IS INCLUSIVE (EXTRACTED)",
+    grossAsIs: "Gross = price as-is",
+    netEqGrossDiv: "Net = Gross ÷",
+    taxEqGrossMinus: "Tax = Gross − Net",
+    step3ItemGrossDisc: "STEP 3 — ITEM DISCOUNT ON GROSS (TAX-INCLUDED PRICE)",
+    step3ItemFixedGrossDisc: "STEP 3 — FIXED ITEM DISCOUNT ON GROSS",
+    discOfGross: "Discount % of gross",
+    discAmtBase: "Discount amount",
+    newGrossEq: "New gross",
+    newNetEqGrossDiv: "New net = New gross ÷",
+    newTaxEq: "New tax = New gross − New net",
+    step3ItemNetDisc: "STEP 3 — ITEM DISCOUNT ON NET (PRE-TAX PRICE)",
+    step3ItemFixedNetDisc: "STEP 3 — FIXED ITEM DISCOUNT ON NET",
+    discOfNet: "Discount % of net",
+    newNetEq: "New net",
+    newTaxEqNetMul: "New tax = New net ×",
+    newGrossEqNetPlus: "New gross = New net + New tax",
+    resultForLine: "RESULT FOR THIS LINE",
+    net: "Net",
+    tax: "Tax",
+    grossCustPays: "Gross (what customer pays)",
+    savedByDisc: "Saved by discount",
+    billLevelDiscsAudit: "BILL-LEVEL DISCOUNTS",
+    discGrossTotal: "Discount % of gross total",
+    discNetTotal: "Discount % of net total",
+    totalBillDisc: "Total bill discount saved",
+  },
+  ar: {
+    headerTitle: "حاسبة تخطيط موارد المؤسسات",
+    headerDemo: "نسخة تجريبية",
+    headerDesc: "مجرّب تفاعلي لحزمة <code>erp_calculator</code> لتحديد موارد المؤسسات · يتم تشغيل جميع الحسابات مباشرة في متصفحك",
+    globalTaxRate: "🌐 نسبة الضريبة العامة (%)",
+    lineItems: "عناصر الفاتورة",
+    additem: "＋ إضافة عنصر",
+    billDiscounts: "خصومات الفاتورة",
+    appliedAfter: "تُطبق بعد الحسابات",
+    addDiscount: "＋ إضافة خصم",
+    billSummary: "ملخص الفاتورة",
+    name: "الاسم",
+    productName: "اسم المنتج",
+    qty: "الكمية",
+    unitPrice: "سعر الوحدة",
+    taxMode: "نوع الضريبة",
+    excl: "نسبة مضافة",
+    incl: "مشمول في السعر",
+    none: "بدون ضريبة",
+    itemDiscount: "خصم العنصر",
+    type: "النوع",
+    percentage: "% نسبة",
+    fixedAmount: "مبلغ ثابت",
+    applyOn: "يطبق على",
+    grossWithTax: "الإجمالي",
+    netPreTax: "الصافي",
+    grossTotal: "الإجمالي الكلي",
+    netTotal: "الصافي الكلي",
+    overrideTax: "نسبة ضريبة مخصصة %",
+    global: "العامة",
+    value: "القيمة",
+    subtotalNet: "المجموع الصافي",
+    subtotalTax: "مجموع الضريبة",
+    subtotalGross: "المجموع الإجمالي",
+    billDiscountLabel: "خصم الفاتورة",
+    totalNet: "إجمالي الصافي",
+    totalTax: "إجمالي الضريبة",
+    totalGross: "الإجمالي الكلي",
+    totalSaved: "🏷 إجمالي التوفير",
+    totals: "المجاميع",
+    discountTag: "(خصم)",
+    atLeastOne: "يجب إضافة عنصر واحد على الأقل.",
+
+    // Audit labels
+    step1Base: "الخطوة ١ — السعر الأساسي",
+    unitXqty: "سعر الوحدة × الكمية",
+    step2NoTax: "الخطوة ٢ — بدون ضريبة",
+    netEqGross: "الصافي = الإجمالي = الأساسي",
+    step2Excl: "الخطوة ٢ — ضريبة نسبة مضافة",
+    netAsIs: "الصافي = السعر المبنى",
+    taxEq: "الضريبة = الصافي ×",
+    grossEq: "الإجمالي = الصافي + الضريبة",
+    step2Incl: "الخطوة ٢ — ضريبة مشمولة في السعر",
+    grossAsIs: "الإجمالي = السعر المبنى",
+    netEqGrossDiv: "الصافي = الإجمالي ÷",
+    taxEqGrossMinus: "الضريبة = الإجمالي − الصافي",
+    step3ItemGrossDisc: "الخطوة ٣ — خصم من الإجمالي",
+    step3ItemFixedGrossDisc: "الخطوة ٣ — خصم ثابت من الإجمالي",
+    discOfGross: "خصم نسبة من الإجمالي",
+    discAmtBase: "مبلغ الخصم",
+    newGrossEq: "الإجمالي الجديد",
+    newNetEqGrossDiv: "الصافي الجديد = الإجمالي الجديد ÷",
+    newTaxEq: "الضريبة الجديدة = الإجمالي الجديد − الصافي الجديد",
+    step3ItemNetDisc: "الخطوة ٣ — خصم من الصافي",
+    step3ItemFixedNetDisc: "الخطوة ٣ — خصم ثابت من الصافي",
+    discOfNet: "خصم نسبة من الصافي",
+    newNetEq: "الصافي الجديد",
+    newTaxEqNetMul: "الضريبة الجديدة = الصافي الجديد ×",
+    newGrossEqNetPlus: "الإجمالي الجديد = الصافي الجديد + الضريبة الجديدة",
+    resultForLine: "النتيجة لهذا العنصر",
+    net: "الصافي",
+    tax: "الضريبة",
+    grossCustPays: "الإجمالي (ما يدفعه العميل)",
+    savedByDisc: "مقدار الخصم",
+    billLevelDiscsAudit: "خصومات الفاتورة",
+    discGrossTotal: "نسبة الخصم من الإجمالي الكلي",
+    discNetTotal: "نسبة الخصم من الصافي الكلي",
+    totalBillDisc: "إجمالي خصومات الفاتورة الموفرة",
+  }
+};
+
+let currentLang = 'en';
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'ar' : 'en';
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('langToggle').textContent = currentLang === 'ar' ? 'English' : 'عربي';
+  
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (i18n[currentLang][key]) {
+      el.innerHTML = i18n[currentLang][key];
+    }
+  });
+
+  render();
+}
+
+function t(key) {
+  return i18n[currentLang][key] || key;
+}
+
 // ─── Enums ────────────────────────────────────────────────────────────────
 const TaxMode        = { exclusive:'exclusive', inclusive:'inclusive', none:'none' };
 const DiscountType   = { percentage:'percentage', fixed:'fixed' };
@@ -413,27 +615,27 @@ function calcLine(item, globalTaxRate){
 
   // STEP 1
   const base = item.unitPrice * item.qty;
-  steps.push(header('STEP 1 — BASE PRICE'));
-  steps.push(step('Unit price × qty', `${f(item.unitPrice)} × ${item.qty} = ${f(base)}`, base));
+  steps.push(header(t('step1Base')));
+  steps.push(step(t('unitXqty'), `${f(item.unitPrice)} × ${item.qty} = ${f(base)}`, base));
 
   // STEP 2 — TAX
   let net, tax, gross;
   if(item.taxMode === TaxMode.none){
     net=base; tax=0; gross=base;
-    steps.push(header('STEP 2 — NO TAX'));
-    steps.push(step('Net = Gross = base', f(base), gross));
+    steps.push(header(t('step2NoTax')));
+    steps.push(step(t('netEqGross'), f(base), gross));
   } else if(item.taxMode === TaxMode.exclusive){
     net=base; tax=net*rate; gross=net+tax;
-    steps.push(header('STEP 2 — TAX IS EXCLUSIVE (ADDED ON TOP)'));
-    steps.push(step('Net = price as-is', f(net), net));
-    steps.push(step(`Tax = Net × ${f(taxRate)}%`, `${f(net)} × ${f(rate)} = ${f(tax)}`, tax, StepHL.tax));
-    steps.push(step('Gross = Net + Tax', `${f(net)} + ${f(tax)} = ${f(gross)}`, gross));
+    steps.push(header(t('step2Excl')));
+    steps.push(step(t('netAsIs'), f(net), net));
+    steps.push(step(`${t('taxEq')} ${f(taxRate)}%`, `${f(net)} × ${f(rate)} = ${f(tax)}`, tax, StepHL.tax));
+    steps.push(step(t('grossEq'), `${f(net)} + ${f(tax)} = ${f(gross)}`, gross));
   } else {
     gross=base; net=gross/(1+rate); tax=gross-net;
-    steps.push(header('STEP 2 — TAX IS INCLUSIVE (EXTRACTED)'));
-    steps.push(step('Gross = price as-is', f(gross), gross));
-    steps.push(step(`Net = Gross ÷ (1 + ${f(taxRate)}%)`, `${f(gross)} ÷ ${f(1+rate)} = ${f(net)}`, net));
-    steps.push(step('Tax = Gross − Net', `${f(gross)} − ${f(net)} = ${f(tax)}`, tax, StepHL.tax));
+    steps.push(header(t('step2Incl')));
+    steps.push(step(t('grossAsIs'), f(gross), gross));
+    steps.push(step(`${t('netEqGrossDiv')} (1 + ${f(taxRate)}%)`, `${f(gross)} ÷ ${f(1+rate)} = ${f(net)}`, net));
+    steps.push(step(t('taxEqGrossMinus'), `${f(gross)} − ${f(net)} = ${f(tax)}`, tax, StepHL.tax));
   }
 
   // STEP 3 — DISCOUNT
@@ -448,20 +650,20 @@ function calcLine(item, globalTaxRate){
         : Math.min(dv, discBase);
 
       const label = item.discountType === DiscountType.percentage
-        ? `STEP 3 — ITEM DISCOUNT ON GROSS (TAX-INCLUDED PRICE)`
-        : `STEP 3 — FIXED ITEM DISCOUNT ON GROSS`;
+        ? t('step3ItemGrossDisc')
+        : t('step3ItemFixedGrossDisc');
       steps.push(header(label));
 
       if(item.discountType === DiscountType.percentage)
-        steps.push(step('Discount % of gross', `${f(dv)}% of ${f(discBase)}`, discountAmount, StepHL.discount));
-      steps.push(step(`Discount amount = ${f(discBase)} × ${f(dv/100)}`, `= ${f(discountAmount)}`, discountAmount, StepHL.discount));
+        steps.push(step(t('discOfGross'), `${f(dv)}% of ${f(discBase)}`, discountAmount, StepHL.discount));
+      steps.push(step(`${t('discAmtBase')} = ${f(discBase)} × ${f(dv/100)}`, `= ${f(discountAmount)}`, discountAmount, StepHL.discount));
 
       const newGross = gross - discountAmount;
       const newNet   = newGross / (1+rate);
       const newTax   = newGross - newNet;
-      steps.push(step(`New gross = ${f(gross)} − ${f(discountAmount)}`, `= ${f(newGross)}`, newGross));
-      steps.push(step(`New net = New gross ÷ (1 + ${f(taxRate)}%)`, `${f(newGross)} ÷ ${f(1+rate)} = ${f(newNet)}`, newNet));
-      steps.push(step(`New tax = New gross − New net`, `${f(newGross)} − ${f(newNet)} = ${f(newTax)}`, newTax, StepHL.tax));
+      steps.push(step(`${t('newGrossEq')} = ${f(gross)} − ${f(discountAmount)}`, `= ${f(newGross)}`, newGross));
+      steps.push(step(`${t('newNetEqGrossDiv')} (1 + ${f(taxRate)}%)`, `${f(newGross)} ÷ ${f(1+rate)} = ${f(newNet)}`, newNet));
+      steps.push(step(t('newTaxEq'), `${f(newGross)} − ${f(newNet)} = ${f(newTax)}`, newTax, StepHL.tax));
       net=newNet; tax=newTax; gross=newGross;
     } else {
       const discBase = net;
@@ -470,30 +672,30 @@ function calcLine(item, globalTaxRate){
         : Math.min(dv, discBase);
 
       const label = item.discountType === DiscountType.percentage
-        ? `STEP 3 — ITEM DISCOUNT ON NET (PRE-TAX PRICE)`
-        : `STEP 3 — FIXED ITEM DISCOUNT ON NET`;
+        ? t('step3ItemNetDisc')
+        : t('step3ItemFixedNetDisc');
       steps.push(header(label));
 
       if(item.discountType === DiscountType.percentage)
-        steps.push(step('Discount % of net', `${f(dv)}% of ${f(discBase)}`, discountAmount, StepHL.discount));
-      steps.push(step(`Discount amount = ${f(discBase)} × ${f(dv/100)}`, `= ${f(discountAmount)}`, discountAmount, StepHL.discount));
+        steps.push(step(t('discOfNet'), `${f(dv)}% of ${f(discBase)}`, discountAmount, StepHL.discount));
+      steps.push(step(`${t('discAmtBase')} = ${f(discBase)} × ${f(dv/100)}`, `= ${f(discountAmount)}`, discountAmount, StepHL.discount));
 
       const newNet   = net - discountAmount;
       const newTax   = newNet * rate;
       const newGross = newNet + newTax;
-      steps.push(step(`New net = ${f(net)} − ${f(discountAmount)}`, `= ${f(newNet)}`, newNet));
-      steps.push(step(`New tax = New net × ${f(taxRate)}%`, `${f(newNet)} × ${f(rate)} = ${f(newTax)}`, newTax, StepHL.tax));
-      steps.push(step(`New gross = New net + New tax`, `${f(newNet)} + ${f(newTax)} = ${f(newGross)}`, newGross));
+      steps.push(step(`${t('newNetEq')} = ${f(net)} − ${f(discountAmount)}`, `= ${f(newNet)}`, newNet));
+      steps.push(step(`${t('newTaxEqNetMul')} ${f(taxRate)}%`, `${f(newNet)} × ${f(rate)} = ${f(newTax)}`, newTax, StepHL.tax));
+      steps.push(step(t('newGrossEqNetPlus'), `${f(newNet)} + ${f(newTax)} = ${f(newGross)}`, newGross));
       net=newNet; tax=newTax; gross=newGross;
     }
   }
 
   // RESULT
-  steps.push(header('RESULT FOR THIS LINE'));
-  steps.push(step('Net', f(net), net));
-  steps.push(step(`Tax (${f(taxRate)}%)`, f(tax), tax, StepHL.tax));
-  steps.push(step('Gross (what customer pays)', f(gross), gross, StepHL.result));
-  if(discountAmount>0) steps.push(step('Saved by discount', f(discountAmount), discountAmount, StepHL.discount));
+  steps.push(header(t('resultForLine')));
+  steps.push(step(t('net'), f(net), net));
+  steps.push(step(`${t('tax')} (${f(taxRate)}%)`, f(tax), tax, StepHL.tax));
+  steps.push(step(t('grossCustPays'), f(gross), gross, StepHL.result));
+  if(discountAmount>0) steps.push(step(t('savedByDisc'), f(discountAmount), discountAmount, StepHL.discount));
 
   return { basePrice:base, net, tax, gross, discountAmount, steps };
 }
@@ -512,7 +714,7 @@ function calculate(items, billDiscounts, globalTaxRate){
   const billSteps  = [];
 
   if(billDiscounts.length){
-    billSteps.push(header('BILL-LEVEL DISCOUNTS'));
+    billSteps.push(header(t('billLevelDiscsAudit')));
   }
 
   for(const d of billDiscounts){
@@ -520,20 +722,20 @@ function calculate(items, billDiscounts, globalTaxRate){
     if(d.applyOn === DiscountApplyOn.gross){
       const base = runningGross;
       const discAmt = d.type===DiscountType.percentage ? base*(d.value/100) : Math.min(d.value,base);
-      if(d.type===DiscountType.percentage) billSteps.push(step('Discount % of gross total', `${f(d.value)}% of ${f(base)}`, discAmt, StepHL.discount));
-      billSteps.push(step(`Discount amount = ${f(base)} × ${f(d.value/100)}`, `= ${f(discAmt)}`, discAmt, StepHL.discount));
+      if(d.type===DiscountType.percentage) billSteps.push(step(t('discGrossTotal'), `${f(d.value)}% of ${f(base)}`, discAmt, StepHL.discount));
+      billSteps.push(step(`${t('discAmtBase')} = ${f(base)} × ${f(d.value/100)}`, `= ${f(discAmt)}`, discAmt, StepHL.discount));
       const newGross = base-discAmt;
-      billSteps.push(step(`New gross = ${f(base)} − ${f(discAmt)}`, `= ${f(newGross)}`, newGross));
+      billSteps.push(step(`${t('newGrossEq')} = ${f(base)} − ${f(discAmt)}`, `= ${f(newGross)}`, newGross));
       runningGross=newGross; runningNet=runningGross/(1+rate);
     } else {
       const base = runningNet;
       const discAmt = d.type===DiscountType.percentage ? base*(d.value/100) : Math.min(d.value,base);
-      if(d.type===DiscountType.percentage) billSteps.push(step('Discount % of net total', `${f(d.value)}% of ${f(base)}`, discAmt, StepHL.discount));
-      billSteps.push(step(`Discount amount = ${f(base)} × ${f(d.value/100)}`, `= ${f(discAmt)}`, discAmt, StepHL.discount));
+      if(d.type===DiscountType.percentage) billSteps.push(step(t('discNetTotal'), `${f(d.value)}% of ${f(base)}`, discAmt, StepHL.discount));
+      billSteps.push(step(`${t('discAmtBase')} = ${f(base)} × ${f(d.value/100)}`, `= ${f(discAmt)}`, discAmt, StepHL.discount));
       const newNet = base-discAmt;
-      billSteps.push(step(`New net = ${f(base)} − ${f(discAmt)}`, `= ${f(newNet)}`, newNet));
+      billSteps.push(step(`${t('newNetEq')} = ${f(base)} − ${f(discAmt)}`, `= ${f(newNet)}`, newNet));
       const newGross=newNet*(1+rate);
-      billSteps.push(step(`New gross = new net × (1 + ${f(globalTaxRate)}%)`, `${f(newNet)} × ${f(1+rate)} = ${f(newGross)}`, newGross, StepHL.tax));
+      billSteps.push(step(`${t('newGrossEqNetPlus')} : ${f(newNet)} × (1 + ${f(globalTaxRate)}%)`, `${f(newNet)} × ${f(1+rate)} = ${f(newGross)}`, newGross, StepHL.tax));
       runningNet=newNet; runningGross=newGross;
     }
   }
@@ -544,7 +746,7 @@ function calculate(items, billDiscounts, globalTaxRate){
   const billDiscountAmount = subtotalGross-totalGross;
 
   if(billDiscounts.length){
-    billSteps.push(step('Total bill discount saved', `${f(subtotalGross)} − ${f(totalGross)}`, billDiscountAmount, StepHL.discount));
+    billSteps.push(step(t('totalBillDisc'), `${f(subtotalGross)} − ${f(totalGross)}`, billDiscountAmount, StepHL.discount));
   }
 
   return { lineResults, subtotalNet, subtotalTax, subtotalGross, billDiscountAmount, totalNet, totalTax, totalGross, totalSaved: itemSaved+billDiscountAmount, billSteps };
@@ -584,57 +786,57 @@ function renderItems(result){
   <!-- Row 1: main inputs -->
   <div class="line-inputs">
     <div class="field">
-      <label>Name</label>
-      <input type="text" placeholder="Product name" value="${item.name}"
+      <label>${t('name')}</label>
+      <input type="text" placeholder="${t('productName')}" value="${item.name}"
         onchange="updateItem('${item.id}','name',this.value)" />
     </div>
     <div class="field">
-      <label>Qty</label>
+      <label>${t('qty')}</label>
       <input type="number" min="1" step="1" value="${item.qty}"
         oninput="updateItem('${item.id}','qty',+this.value||1)" />
     </div>
     <div class="field">
-      <label>Unit price</label>
+      <label>${t('unitPrice')}</label>
       <input type="number" min="0" step="0.01" value="${item.unitPrice}"
         oninput="updateItem('${item.id}','unitPrice',+this.value||0)" />
     </div>
     <div class="field">
-      <label>Tax mode</label>
+      <label>${t('taxMode')}</label>
       <select onchange="updateItem('${item.id}','taxMode',this.value)">
-        <option value="exclusive" ${item.taxMode==='exclusive'?'selected':''}>Excl. (add on top)</option>
-        <option value="inclusive" ${item.taxMode==='inclusive'?'selected':''}>Incl. (in price)</option>
-        <option value="none"      ${item.taxMode==='none'     ?'selected':''}>None</option>
+        <option value="exclusive" ${item.taxMode==='exclusive'?'selected':''}>${t('excl')}</option>
+        <option value="inclusive" ${item.taxMode==='inclusive'?'selected':''}>${t('incl')}</option>
+        <option value="none"      ${item.taxMode==='none'     ?'selected':''}>${t('none')}</option>
       </select>
     </div>
-    <button class="btn-delete" onclick="removeItem('${item.id}')">✕</button>
+    <button class="btn-delete" title="Remove" onclick="removeItem('${item.id}')">✕</button>
   </div>
 
   <!-- Row 2: discount -->
   <div class="discount-row">
     <div class="field">
-      <label>Item discount</label>
+      <label>${t('itemDiscount')}</label>
       <input type="number" min="0" step="0.01" placeholder="0"
         value="${item.discountValue||''}"
         oninput="updateItem('${item.id}','discountValue',+this.value||0)" />
     </div>
     <div class="field">
-      <label>Type</label>
+      <label>${t('type')}</label>
       <select onchange="updateItem('${item.id}','discountType',this.value)">
-        <option value="percentage" ${item.discountType==='percentage'?'selected':''}>% percentage</option>
-        <option value="fixed"      ${item.discountType==='fixed'     ?'selected':''}>Fixed amount</option>
+        <option value="percentage" ${item.discountType==='percentage'?'selected':''}>${t('percentage')}</option>
+        <option value="fixed"      ${item.discountType==='fixed'     ?'selected':''}>${t('fixedAmount')}</option>
       </select>
     </div>
     <div class="field">
-      <label>Apply on</label>
+      <label>${t('applyOn')}</label>
       <select onchange="updateItem('${item.id}','discountApplyOn',this.value)">
-        <option value="gross" ${item.discountApplyOn==='gross'?'selected':''}>Gross (with tax)</option>
-        <option value="net"   ${item.discountApplyOn==='net'  ?'selected':''}>Net (pre-tax)</option>
+        <option value="gross" ${item.discountApplyOn==='gross'?'selected':''}>${t('grossWithTax')}</option>
+        <option value="net"   ${item.discountApplyOn==='net'  ?'selected':''}>${t('netPreTax')}</option>
       </select>
     </div>
     <div class="field">
-      <label>Override tax %</label>
+      <label>${t('overrideTax')}</label>
       <select onchange="setTaxOverride('${item.id}',this.value)">
-        <option value="" ${item.taxRateOverride===null?'selected':''}>Global (${+document.getElementById('globalTax').value}%)</option>
+        <option value="" ${item.taxRateOverride===null?'selected':''}>${t('global')} (${+document.getElementById('globalTax').value}%)</option>
         <option value="0"  ${item.taxRateOverride===0  ?'selected':''}>0%</option>
         <option value="5"  ${item.taxRateOverride===5  ?'selected':''}>5%</option>
         <option value="10" ${item.taxRateOverride===10 ?'selected':''}>10%</option>
@@ -659,22 +861,22 @@ function renderBillDiscounts(){
   wrapper.innerHTML = billDiscounts.map(d => `
 <div class="bd-row" data-bd-id="${d.id}">
   <div class="field">
-    <label>Value</label>
+    <label>${t('value')}</label>
     <input type="number" min="0" step="0.01" value="${d.value}"
       oninput="updateBD('${d.id}','value',+this.value||0)" />
   </div>
   <div class="field">
-    <label>Type</label>
+    <label>${t('type')}</label>
     <select onchange="updateBD('${d.id}','type',this.value)">
-      <option value="percentage" ${d.type==='percentage'?'selected':''}>% percentage</option>
-      <option value="fixed"      ${d.type==='fixed'     ?'selected':''}>Fixed amount</option>
+      <option value="percentage" ${d.type==='percentage'?'selected':''}>${t('percentage')}</option>
+      <option value="fixed"      ${d.type==='fixed'     ?'selected':''}>${t('fixedAmount')}</option>
     </select>
   </div>
   <div class="field">
-    <label>Apply on</label>
+    <label>${t('applyOn')}</label>
     <select onchange="updateBD('${d.id}','applyOn',this.value)">
-      <option value="gross" ${d.applyOn==='gross'?'selected':''}>Gross total</option>
-      <option value="net"   ${d.applyOn==='net'  ?'selected':''}>Net total</option>
+      <option value="gross" ${d.applyOn==='gross'?'selected':''}>${t('grossTotal')}</option>
+      <option value="net"   ${d.applyOn==='net'  ?'selected':''}>${t('netTotal')}</option>
     </select>
   </div>
   <button class="btn-delete" onclick="removeBD('${d.id}')">✕</button>
@@ -685,23 +887,23 @@ function renderSummary(result){
   const hasBillAudit = result.billSteps.length > 0;
   const billAuditEl  = document.getElementById('billAudit');
   const rows = [
-    { label:`Subtotal Net`,  val:result.subtotalNet,   cls:'' },
-    { label:`Subtotal Tax`,  val:result.subtotalTax,   cls:'tax-row' },
-    { label:`Subtotal Gross`,val:result.subtotalGross, cls:'' },
+    { label:t('subtotalNet'),  val:result.subtotalNet,   cls:'' },
+    { label:t('subtotalTax'),  val:result.subtotalTax,   cls:'tax-row' },
+    { label:t('subtotalGross'),val:result.subtotalGross, cls:'' },
   ];
   if(result.billDiscountAmount>0)
-    rows.push({ label:`Bill Discount`, val:-result.billDiscountAmount, cls:'disc-row' });
-  rows.push({ label:`Total Net`,  val:result.totalNet,   cls:'' });
-  rows.push({ label:`Total Tax`,  val:result.totalTax,   cls:'tax-row' });
-  rows.push({ label:`Total Gross (customer pays)`, val:result.totalGross, cls:'bs-total total-row' });
+    rows.push({ label:t('billDiscountLabel'), val:-result.billDiscountAmount, cls:'disc-row' });
+  rows.push({ label:t('totalNet'),  val:result.totalNet,   cls:'' });
+  rows.push({ label:t('totalTax'),  val:result.totalTax,   cls:'tax-row' });
+  rows.push({ label:t('totalGross'), val:result.totalGross, cls:'bs-total total-row' });
   if(result.totalSaved>0)
-    rows.push({ label:`🏷 Total Saved`, val:result.totalSaved, cls:'saved-row' });
+    rows.push({ label:t('totalSaved'), val:result.totalSaved, cls:'saved-row' });
 
   document.getElementById('billSummary').innerHTML = `
-<div class="bs-header">Totals</div>
+<div class="bs-header" data-i18n="totals">${t('totals')}</div>
 ${rows.map(r=>`<div class="bs-row ${r.cls}">
   <span>${r.label}</span>
-  <span class="bs-val">${f(Math.abs(r.val))}${r.val<0?' (discount)':''}</span>
+  <span class="bs-val">${f(Math.abs(r.val))}${r.val<0?' ' + t('discountTag') : ''}</span>
 </div>`).join('')}`;
 
   if(hasBillAudit){
@@ -733,7 +935,7 @@ function setTaxOverride(id, value){
   render();
 }
 function removeItem(id){
-  if(items.length===1){ alert('At least one line item is required.'); return; }
+  if(items.length===1){ alert(t('atLeastOne')); return; }
   items = items.filter(i=>i.id!==id);
   render();
 }
