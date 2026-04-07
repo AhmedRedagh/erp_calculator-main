@@ -1,4 +1,4 @@
-/// ERP Calculator — Pure Dart billing calculation engine.
+/// ERP Calculator - Pure Dart billing calculation engine.
 ///
 /// A stateless, side-effect-free engine for computing line-item and bill-level
 /// tax/discount totals. Safe to call on every keystroke or in any isolate.
@@ -16,13 +16,13 @@
 ///       unitPrice: 100,
 ///       qty: 2,
 ///       taxMode: TaxMode.exclusive,
+///       taxRate: 15,
 ///       discountValue: 10,
 ///       discountType: DiscountType.percentage,
 ///       discountApplyOn: DiscountApplyOn.gross,
 ///     ),
 ///   ],
 ///   billDiscounts: [],
-///   globalTaxRate: 15,
 /// );
 ///
 /// print(result.totalGross); // 207.00
@@ -33,7 +33,7 @@
 /// | applyOn | behaviour |
 /// |---------|-----------|
 /// | `gross` | Discount is taken from the tax-included price. Net is back-calculated. |
-/// | `net`   | Discount is taken from the pre-tax price. Tax is **re-applied** on the reduced net — greater effective saving. |
+/// | `net`   | Discount is taken from the pre-tax price. Tax is re-applied on the reduced net. |
 library erp_calculator;
 
 export 'src/enums/discount_apply_on.dart';

@@ -14,6 +14,7 @@ import '../enums/tax_mode.dart';
 ///   unitPrice: 50.00,
 ///   qty: 3,
 ///   taxMode: TaxMode.exclusive,
+///   taxRate: 15,
 ///   discountValue: 10,
 ///   discountType: DiscountType.percentage,
 ///   discountApplyOn: DiscountApplyOn.net,
@@ -27,18 +28,20 @@ class LineItem {
   /// Human-readable product or service name.
   final String name;
 
-  /// Price per single unit **before** any discount, in the bill's currency.
-  /// Must be ≥ 0.
+  /// Price per single unit before any discount, in the bill's currency.
+  /// Must be >= 0.
   final double unitPrice;
 
-  /// Number of units ordered. Must be ≥ 1.
+  /// Number of units ordered. Must be >= 1.
   final int qty;
 
   /// Describes how tax relates to [unitPrice].
   final TaxMode taxMode;
 
-  /// Per-item tax rate override (0–100). When `null`, the global rate is used.
-  final double? taxRateOverride;
+  /// Per-item tax rate percentage.
+  ///
+  /// This value is ignored when [taxMode] is [TaxMode.none].
+  final double taxRate;
 
   /// Discount value to apply to this line.
   /// Interpreted as a percentage when [discountType] is [DiscountType.percentage],
@@ -57,16 +60,13 @@ class LineItem {
     this.unitPrice = 0,
     this.qty = 1,
     this.taxMode = TaxMode.exclusive,
-    this.taxRateOverride,
+    this.taxRate = 0,
     this.discountValue,
     this.discountType = DiscountType.percentage,
     this.discountApplyOn = DiscountApplyOn.gross,
-  })  : assert(unitPrice >= 0, 'unitPrice must be ≥ 0'),
-        assert(qty >= 1, 'qty must be ≥ 1'),
-        assert(
-          taxRateOverride == null || taxRateOverride >= 0,
-          'taxRateOverride must be ≥ 0',
-        );
+  })  : assert(unitPrice >= 0, 'unitPrice must be >= 0'),
+        assert(qty >= 1, 'qty must be >= 1'),
+        assert(taxRate >= 0, 'taxRate must be >= 0');
 
   /// Returns a copy of this [LineItem] with the given fields replaced.
   ///
@@ -78,7 +78,7 @@ class LineItem {
     double? unitPrice,
     int? qty,
     TaxMode? taxMode,
-    double? taxRateOverride,
+    double? taxRate,
     double? discountValue,
     bool clearDiscount = false,
     DiscountType? discountType,
@@ -90,7 +90,7 @@ class LineItem {
       unitPrice: unitPrice ?? this.unitPrice,
       qty: qty ?? this.qty,
       taxMode: taxMode ?? this.taxMode,
-      taxRateOverride: taxRateOverride ?? this.taxRateOverride,
+      taxRate: taxRate ?? this.taxRate,
       discountValue:
           clearDiscount ? null : (discountValue ?? this.discountValue),
       discountType: discountType ?? this.discountType,
@@ -108,7 +108,7 @@ class LineItem {
           unitPrice == other.unitPrice &&
           qty == other.qty &&
           taxMode == other.taxMode &&
-          taxRateOverride == other.taxRateOverride &&
+          taxRate == other.taxRate &&
           discountValue == other.discountValue &&
           discountType == other.discountType &&
           discountApplyOn == other.discountApplyOn;
@@ -120,7 +120,7 @@ class LineItem {
         unitPrice,
         qty,
         taxMode,
-        taxRateOverride,
+        taxRate,
         discountValue,
         discountType,
         discountApplyOn,
@@ -132,6 +132,7 @@ class LineItem {
       'name: $name, '
       'unitPrice: $unitPrice, '
       'qty: $qty, '
-      'taxMode: $taxMode'
+      'taxMode: $taxMode, '
+      'taxRate: $taxRate'
       ')';
 }
