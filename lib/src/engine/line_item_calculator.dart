@@ -34,12 +34,21 @@ abstract final class LineItemCalculator {
 
     _addResultSummary(taxRate, net, tax, gross, discountAmount, steps);
 
+    final displayDiscountPercentage = dv <= 0
+        ? 0.0
+        : item.discountType == DiscountType.percentage
+            ? dv
+            : basePrice > 0
+                ? (discountAmount / basePrice) * 100
+                : 0.0;
+
     return LineItemResult(
       basePrice: basePrice,
       net: net,
       tax: tax,
       gross: gross,
       discountAmount: discountAmount,
+      displayDiscountPercentage: displayDiscountPercentage,
       steps: steps,
     );
   }

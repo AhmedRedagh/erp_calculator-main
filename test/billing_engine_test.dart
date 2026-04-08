@@ -223,6 +223,8 @@ void main() {
 
       expect(result.totalNet, r(90));
       expect(result.totalGross, r(103.50));
+      expect(result.billDiscountAmount, r(10));
+      expect(result.billDiscountImpactOnGross, r(11.50));
     });
 
     test('mixed item tax rates are recalculated per line', () {
@@ -291,6 +293,88 @@ void main() {
       expect(result.subtotalTax, r(30));
       expect(result.subtotalGross, r(330));
       expect(result.totalGross, r(330));
+    });
+  });
+
+  group('UI discount percentage outputs', () {
+    test('line item returns display discount percentage and net prices', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+            discountValue: 30,
+            discountType: DiscountType.fixed,
+            discountApplyOn: DiscountApplyOn.gross,
+          ),
+        ],
+        billDiscounts: [],
+      );
+
+      final line = result.lineResults.first;
+      expect(line.originalPriceWithoutTax, r(200));
+      expect(line.discountedPriceWithoutTax, r(170));
+      expect(line.displayDiscountPercentage, r(15));
+    });
+
+    test('bill result returns footer discount percentage only', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+            discountValue: 30,
+            discountType: DiscountType.fixed,
+            discountApplyOn: DiscountApplyOn.gross,
+          ),
+        ],
+        billDiscounts: [
+          const BillDiscount(
+            id: 'BD1',
+            value: 10,
+            type: DiscountType.fixed,
+            applyOn: DiscountApplyOn.gross,
+          ),
+        ],
+      );
+
+      expect(result.subtotalNet, r(170));
+      expect(result.billDiscountAmount, r(10));
+      expect(result.billDiscountImpactOnGross, r(11.50));
+      expect(result.billDiscountDisplayPercentage, r((10 / 170) * 100));
+    });
+
+    test('bill fixed discount on net keeps entered amount in billDiscountAmount', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+          ),
+        ],
+        billDiscounts: [
+          const BillDiscount(
+            id: 'BD1',
+            value: 10,
+            type: DiscountType.fixed,
+            applyOn: DiscountApplyOn.net,
+          ),
+        ],
+      );
+
+      expect(result.billDiscountAmount, r(10));
     });
   });
 

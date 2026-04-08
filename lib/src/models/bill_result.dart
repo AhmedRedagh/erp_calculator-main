@@ -8,7 +8,7 @@ import 'line_item_result.dart';
 /// ### Money flow
 /// ```
 /// subtotalGross  (sum of line grosses, after item discounts)
-///   − billDiscountAmount
+///   − billDiscountImpactOnGross (derived from totals)
 ///   = totalGross
 ///
 /// totalGross = totalNet + totalTax
@@ -33,8 +33,25 @@ class BillResult {
 
   // ── Bill-level adjustments ───────────────────────────────────────────────
 
-  /// Total monetary saving from bill-level discounts (in gross terms).
+  /// Total bill-level discount amount by the configured apply-on basis.
+  ///
+  /// - If apply-on is `net`, this is the discount taken from net totals.
+  /// - If apply-on is `gross`, this is the discount taken from gross totals.
+  ///
+  /// For fixed discounts, this matches the entered fixed value (clamped by
+  /// available base). It excludes item-level discounts.
   final double billDiscountAmount;
+
+  /// Effective reduction on gross payable total caused by bill discounts.
+  ///
+  /// This is always derived from totals:
+  /// `subtotalGross - totalGross`.
+  final double billDiscountImpactOnGross;
+
+  /// Bill-level discount percentage for display in footer.
+  ///
+  /// This value excludes item-level discounts.
+  final double billDiscountDisplayPercentage;
 
   // ── Final totals (after all discounts) ──────────────────────────────────
 
@@ -60,6 +77,8 @@ class BillResult {
     required this.subtotalTax,
     required this.subtotalGross,
     required this.billDiscountAmount,
+    required this.billDiscountImpactOnGross,
+    required this.billDiscountDisplayPercentage,
     required this.totalNet,
     required this.totalTax,
     required this.totalGross,
@@ -74,15 +93,25 @@ class BillResult {
           runtimeType == other.runtimeType &&
           subtotalGross == other.subtotalGross &&
           totalGross == other.totalGross &&
-          totalSaved == other.totalSaved;
+          totalSaved == other.totalSaved &&
+          billDiscountImpactOnGross == other.billDiscountImpactOnGross &&
+          billDiscountDisplayPercentage == other.billDiscountDisplayPercentage;
 
   @override
-  int get hashCode => Object.hash(subtotalGross, totalGross, totalSaved);
+  int get hashCode => Object.hash(
+        subtotalGross,
+        totalGross,
+        totalSaved,
+        billDiscountImpactOnGross,
+        billDiscountDisplayPercentage,
+      );
 
   @override
   String toString() => 'BillResult('
       'subtotalGross: $subtotalGross, '
       'billDiscountAmount: $billDiscountAmount, '
+      'billDiscountImpactOnGross: $billDiscountImpactOnGross, '
+      'billDiscountDisplayPercentage: $billDiscountDisplayPercentage, '
       'totalGross: $totalGross, '
       'totalSaved: $totalSaved'
       ')';
