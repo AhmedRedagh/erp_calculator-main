@@ -34,7 +34,11 @@ abstract final class BillingEngine {
     );
 
     final totalTax = totalGross - totalNet;
-    final billDiscountAmount = subtotalGross - totalGross;
+    final billDiscountAmount = _billDiscountAmountForDisplay(
+      billDiscounts: billDiscounts,
+      subtotalNet: subtotalNet,
+      subtotalGross: subtotalGross,
+    );
     final billDiscountDisplayPercentage = _billDiscountDisplayPercentage(
       billDiscounts: billDiscounts,
       subtotalNet: subtotalNet,
@@ -314,6 +318,32 @@ abstract final class BillingEngine {
       type == DiscountType.percentage
           ? base * (value / 100)
           : value.clamp(0.0, base);
+
+  static double _billDiscountAmountForDisplay({
+    required List<BillDiscount> billDiscounts,
+    required double subtotalNet,
+    required double subtotalGross,
+  }) {
+    var runningNet = subtotalNet;
+    var runningGross = subtotalGross;
+    var total = 0.0;
+
+    for (final discount in billDiscounts.where((d) => d.value > 0)) {
+      final base = discount.applyOn == DiscountApplyOn.gross
+          ? runningGross
+          : runningNet;
+      final amount = _discountAmount(discount.type, discount.value, base);
+      total += amount;
+
+      if (discount.applyOn == DiscountApplyOn.gross) {
+        runningGross = (runningGross - amount).clamp(0.0, runningGross);
+      } else {
+        runningNet = (runningNet - amount).clamp(0.0, runningNet);
+      }
+    }
+
+    return total;
+  }
 }
 
 final class _RunningLine {

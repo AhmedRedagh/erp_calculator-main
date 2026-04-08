@@ -345,6 +345,7 @@ void main() {
       );
 
       expect(result.subtotalNet, r(170));
+      expect(result.billDiscountAmount, r(10));
       expect(result.billDiscountDisplayPercentage, r((10 / 170) * 100));
     });
   });

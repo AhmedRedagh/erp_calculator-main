@@ -33,7 +33,10 @@ class BillResult {
 
   // ── Bill-level adjustments ───────────────────────────────────────────────
 
-  /// Total monetary saving from bill-level discounts (in gross terms).
+  /// Total bill-level discount amount intended for footer display.
+  ///
+  /// For fixed footer discounts, this matches the entered fixed value
+  /// (clamped by available base). It excludes item-level discounts.
   final double billDiscountAmount;
 
   /// Bill-level discount percentage for display in footer.
