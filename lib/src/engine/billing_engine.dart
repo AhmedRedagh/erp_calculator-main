@@ -39,6 +39,7 @@ abstract final class BillingEngine {
       subtotalNet: subtotalNet,
       subtotalGross: subtotalGross,
     );
+    final billDiscountImpactOnGross = subtotalGross - totalGross;
     final billDiscountDisplayPercentage = _billDiscountDisplayPercentage(
       billDiscounts: billDiscounts,
       subtotalNet: subtotalNet,
@@ -50,6 +51,7 @@ abstract final class BillingEngine {
       subtotalTax: subtotalTax,
       subtotalGross: subtotalGross,
       billDiscountAmount: billDiscountAmount,
+      billDiscountImpactOnGross: billDiscountImpactOnGross,
       billDiscountDisplayPercentage: billDiscountDisplayPercentage,
       totalNet: totalNet,
       totalTax: totalTax,

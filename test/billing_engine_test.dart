@@ -223,6 +223,8 @@ void main() {
 
       expect(result.totalNet, r(90));
       expect(result.totalGross, r(103.50));
+      expect(result.billDiscountAmount, r(10));
+      expect(result.billDiscountImpactOnGross, r(11.50));
     });
 
     test('mixed item tax rates are recalculated per line', () {
@@ -346,6 +348,7 @@ void main() {
 
       expect(result.subtotalNet, r(170));
       expect(result.billDiscountAmount, r(10));
+      expect(result.billDiscountImpactOnGross, r(11.50));
       expect(result.billDiscountDisplayPercentage, r((10 / 170) * 100));
     });
 

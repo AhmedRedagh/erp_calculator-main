@@ -33,11 +33,20 @@ class BillResult {
 
   // ── Bill-level adjustments ───────────────────────────────────────────────
 
-  /// Total bill-level discount amount intended for footer display.
+  /// Total bill-level discount amount by the configured apply-on basis.
   ///
-  /// For fixed footer discounts, this matches the entered fixed value
-  /// (clamped by available base). It excludes item-level discounts.
+  /// - If apply-on is `net`, this is the discount taken from net totals.
+  /// - If apply-on is `gross`, this is the discount taken from gross totals.
+  ///
+  /// For fixed discounts, this matches the entered fixed value (clamped by
+  /// available base). It excludes item-level discounts.
   final double billDiscountAmount;
+
+  /// Effective reduction on gross payable total caused by bill discounts.
+  ///
+  /// This is always derived from totals:
+  /// `subtotalGross - totalGross`.
+  final double billDiscountImpactOnGross;
 
   /// Bill-level discount percentage for display in footer.
   ///
@@ -68,6 +77,7 @@ class BillResult {
     required this.subtotalTax,
     required this.subtotalGross,
     required this.billDiscountAmount,
+    required this.billDiscountImpactOnGross,
     required this.billDiscountDisplayPercentage,
     required this.totalNet,
     required this.totalTax,
@@ -84,6 +94,7 @@ class BillResult {
           subtotalGross == other.subtotalGross &&
           totalGross == other.totalGross &&
           totalSaved == other.totalSaved &&
+          billDiscountImpactOnGross == other.billDiscountImpactOnGross &&
           billDiscountDisplayPercentage == other.billDiscountDisplayPercentage;
 
   @override
@@ -91,6 +102,7 @@ class BillResult {
         subtotalGross,
         totalGross,
         totalSaved,
+        billDiscountImpactOnGross,
         billDiscountDisplayPercentage,
       );
 
@@ -98,6 +110,7 @@ class BillResult {
   String toString() => 'BillResult('
       'subtotalGross: $subtotalGross, '
       'billDiscountAmount: $billDiscountAmount, '
+      'billDiscountImpactOnGross: $billDiscountImpactOnGross, '
       'billDiscountDisplayPercentage: $billDiscountDisplayPercentage, '
       'totalGross: $totalGross, '
       'totalSaved: $totalSaved'
