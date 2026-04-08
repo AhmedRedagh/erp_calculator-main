@@ -8,7 +8,7 @@ import 'line_item_result.dart';
 /// ### Money flow
 /// ```
 /// subtotalGross  (sum of line grosses, after item discounts)
-///   − billDiscountAmount
+///   − billDiscountImpactOnGross (derived from totals)
 ///   = totalGross
 ///
 /// totalGross = totalNet + totalTax

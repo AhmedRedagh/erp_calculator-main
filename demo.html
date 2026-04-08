@@ -826,7 +826,25 @@ function calculate(items, billDiscounts){
   const totalNet = runningLines.reduce((sum, line) => sum + line.net, 0);
   const totalGross = runningLines.reduce((sum, line) => sum + line.gross, 0);
   const totalTax = totalGross-totalNet;
-  const billDiscountAmount = subtotalGross-totalGross;
+  let billDiscountAmount = 0;
+  {
+    let runningNetForDisplay = subtotalNet;
+    let runningGrossForDisplay = subtotalGross;
+    for(const d of billDiscounts.filter(bd => bd.value > 0)){
+      const base = d.applyOn === DiscountApplyOn.gross
+        ? runningGrossForDisplay
+        : runningNetForDisplay;
+      const amount = d.type===DiscountType.percentage
+        ? base * (d.value/100)
+        : Math.min(d.value, base);
+      billDiscountAmount += amount;
+      if(d.applyOn === DiscountApplyOn.gross){
+        runningGrossForDisplay = Math.max(runningGrossForDisplay - amount, 0);
+      } else {
+        runningNetForDisplay = Math.max(runningNetForDisplay - amount, 0);
+      }
+    }
+  }
   const activeDiscountsForPct = billDiscounts.filter(d => d.value > 0);
   let billDiscountDisplayPercentage = 0;
   if(subtotalNet > 0 && activeDiscountsForPct.length){

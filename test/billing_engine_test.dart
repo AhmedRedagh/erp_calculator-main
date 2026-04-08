@@ -348,6 +348,31 @@ void main() {
       expect(result.billDiscountAmount, r(10));
       expect(result.billDiscountDisplayPercentage, r((10 / 170) * 100));
     });
+
+    test('bill fixed discount on net keeps entered amount in billDiscountAmount', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+          ),
+        ],
+        billDiscounts: [
+          const BillDiscount(
+            id: 'BD1',
+            value: 10,
+            type: DiscountType.fixed,
+            applyOn: DiscountApplyOn.net,
+          ),
+        ],
+      );
+
+      expect(result.billDiscountAmount, r(10));
+    });
   });
 
   group('Validation', () {
