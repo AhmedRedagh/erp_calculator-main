@@ -23,6 +23,13 @@ class LineItemResult {
   /// Total discount saved on this line (always ≥ 0).
   final double discountAmount;
 
+  /// Discount percentage intended for display in UI.
+  ///
+  /// If discount type is percentage, this is the entered percentage.
+  /// If discount type is fixed amount, this is derived from
+  /// `discountAmount / basePrice * 100`.
+  final double displayDiscountPercentage;
+
   /// Step-by-step audit trail that explains how [net], [tax], and [gross]
   /// were derived. Suitable for display in a calculation breakdown UI.
   final List<CalculationStep> steps;
@@ -33,8 +40,18 @@ class LineItemResult {
     required this.tax,
     required this.gross,
     required this.discountAmount,
+    required this.displayDiscountPercentage,
     required this.steps,
   });
+
+  /// Unit price x qty, before tax.
+  double get originalPriceWithoutTax => basePrice;
+
+  /// Price without tax after discount, for UI display.
+  double get discountedPriceWithoutTax => (basePrice - discountAmount).clamp(
+        0.0,
+        basePrice,
+      );
 
   @override
   bool operator ==(Object other) =>
@@ -45,17 +62,26 @@ class LineItemResult {
           net == other.net &&
           tax == other.tax &&
           gross == other.gross &&
-          discountAmount == other.discountAmount;
+          discountAmount == other.discountAmount &&
+          displayDiscountPercentage == other.displayDiscountPercentage;
 
   @override
   int get hashCode =>
-      Object.hash(basePrice, net, tax, gross, discountAmount);
+      Object.hash(
+        basePrice,
+        net,
+        tax,
+        gross,
+        discountAmount,
+        displayDiscountPercentage,
+      );
 
   @override
   String toString() => 'LineItemResult('
       'net: $net, '
       'tax: $tax, '
       'gross: $gross, '
-      'discountAmount: $discountAmount'
+      'discountAmount: $discountAmount, '
+      'displayDiscountPercentage: $displayDiscountPercentage'
       ')';
 }

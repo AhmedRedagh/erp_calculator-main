@@ -36,6 +36,11 @@ class BillResult {
   /// Total monetary saving from bill-level discounts (in gross terms).
   final double billDiscountAmount;
 
+  /// Bill-level discount percentage for display in footer.
+  ///
+  /// This value excludes item-level discounts.
+  final double billDiscountDisplayPercentage;
+
   // ── Final totals (after all discounts) ──────────────────────────────────
 
   /// Final pre-tax total the customer owes.
@@ -60,6 +65,7 @@ class BillResult {
     required this.subtotalTax,
     required this.subtotalGross,
     required this.billDiscountAmount,
+    required this.billDiscountDisplayPercentage,
     required this.totalNet,
     required this.totalTax,
     required this.totalGross,
@@ -74,15 +80,22 @@ class BillResult {
           runtimeType == other.runtimeType &&
           subtotalGross == other.subtotalGross &&
           totalGross == other.totalGross &&
-          totalSaved == other.totalSaved;
+          totalSaved == other.totalSaved &&
+          billDiscountDisplayPercentage == other.billDiscountDisplayPercentage;
 
   @override
-  int get hashCode => Object.hash(subtotalGross, totalGross, totalSaved);
+  int get hashCode => Object.hash(
+        subtotalGross,
+        totalGross,
+        totalSaved,
+        billDiscountDisplayPercentage,
+      );
 
   @override
   String toString() => 'BillResult('
       'subtotalGross: $subtotalGross, '
       'billDiscountAmount: $billDiscountAmount, '
+      'billDiscountDisplayPercentage: $billDiscountDisplayPercentage, '
       'totalGross: $totalGross, '
       'totalSaved: $totalSaved'
       ')';

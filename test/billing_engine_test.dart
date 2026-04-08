@@ -294,6 +294,61 @@ void main() {
     });
   });
 
+  group('UI discount percentage outputs', () {
+    test('line item returns display discount percentage and net prices', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+            discountValue: 30,
+            discountType: DiscountType.fixed,
+            discountApplyOn: DiscountApplyOn.gross,
+          ),
+        ],
+        billDiscounts: [],
+      );
+
+      final line = result.lineResults.first;
+      expect(line.originalPriceWithoutTax, r(200));
+      expect(line.discountedPriceWithoutTax, r(170));
+      expect(line.displayDiscountPercentage, r(15));
+    });
+
+    test('bill result returns footer discount percentage only', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+            discountValue: 30,
+            discountType: DiscountType.fixed,
+            discountApplyOn: DiscountApplyOn.gross,
+          ),
+        ],
+        billDiscounts: [
+          const BillDiscount(
+            id: 'BD1',
+            value: 10,
+            type: DiscountType.fixed,
+            applyOn: DiscountApplyOn.gross,
+          ),
+        ],
+      );
+
+      expect(result.subtotalNet, r(170));
+      expect(result.billDiscountDisplayPercentage, r((10 / 170) * 100));
+    });
+  });
+
   group('Validation', () {
     test('throws ArgumentError for empty items list', () {
       expect(

@@ -35,6 +35,10 @@ abstract final class BillingEngine {
 
     final totalTax = totalGross - totalNet;
     final billDiscountAmount = subtotalGross - totalGross;
+    final billDiscountDisplayPercentage = _billDiscountDisplayPercentage(
+      billDiscounts: billDiscounts,
+      subtotalNet: subtotalNet,
+    );
 
     return BillResult(
       lineResults: lineResults,
@@ -42,6 +46,7 @@ abstract final class BillingEngine {
       subtotalTax: subtotalTax,
       subtotalGross: subtotalGross,
       billDiscountAmount: billDiscountAmount,
+      billDiscountDisplayPercentage: billDiscountDisplayPercentage,
       totalNet: totalNet,
       totalTax: totalTax,
       totalGross: totalGross,
@@ -268,6 +273,38 @@ abstract final class BillingEngine {
   }
 
   static String _fmt(double v) => v.toStringAsFixed(2);
+
+  static double _billDiscountDisplayPercentage({
+    required List<BillDiscount> billDiscounts,
+    required double subtotalNet,
+  }) {
+    if (subtotalNet <= 0) {
+      return 0.0;
+    }
+
+    final active = billDiscounts.where((d) => d.value > 0).toList();
+    if (active.isEmpty) {
+      return 0.0;
+    }
+    if (active.length == 1 && active.first.type == DiscountType.percentage) {
+      return active.first.value;
+    }
+
+    var runningNet = subtotalNet;
+    var totalDiscountOnNet = 0.0;
+
+    for (final discount in active) {
+      final discountAmount = _discountAmount(
+        discount.type,
+        discount.value,
+        runningNet,
+      );
+      totalDiscountOnNet += discountAmount;
+      runningNet = (runningNet - discountAmount).clamp(0.0, runningNet);
+    }
+
+    return (totalDiscountOnNet / subtotalNet) * 100;
+  }
 
   static double _discountAmount(
     DiscountType type,

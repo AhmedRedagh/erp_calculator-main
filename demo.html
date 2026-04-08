@@ -148,6 +148,32 @@
     }
     .discount-row .field { border-right: 1px solid var(--border); }
     .discount-row .field:last-child { border-right: none; }
+    .discount-display-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background: rgba(245, 166, 35, 0.07);
+      border-top: 1px solid var(--border);
+    }
+    .discount-display-row .field {
+      padding: 10px 12px;
+      border-right: 1px solid var(--border);
+    }
+    .discount-display-row .field:last-child { border-right: none; }
+    .discount-display-row label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .discount-display-row .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .discount-display-row .value.discount-percent { color: var(--discount); }
 
     /* ── Audit trail ──────────────────────────────────────────────────── */
     .audit-trail {
@@ -324,6 +350,8 @@
     html[dir="rtl"] .field select { background-position: left 4px center; padding-right: 0px; padding-left: 16px; }
     html[dir="rtl"] .discount-row .field { border-right: none; border-left: 1px solid var(--border); }
     html[dir="rtl"] .discount-row .field:last-child { border-left: none; }
+    html[dir="rtl"] .discount-display-row .field { border-right: none; border-left: 1px solid var(--border); }
+    html[dir="rtl"] .discount-display-row .field:last-child { border-left: none; }
     html[dir="rtl"] .bd-row .field { border-right: none; border-left: 1px solid var(--border); }
     html[dir="rtl"] .bd-row .field:last-child { border-left: none; }
     html[dir="rtl"] .step-row .step-formula { margin-left: 0; margin-right: 8px; text-align: left; }
@@ -406,6 +434,10 @@ const i18n = {
     totalTax: "Total Tax",
     totalGross: "Total Gross (customer pays)",
     totalSaved: "🏷 Total Saved",
+    itemOriginalPrice: "Original price",
+    itemDiscountedPrice: "Discounted price",
+    itemDiscountPercent: "Discount %",
+    overallDiscountPercent: "Overall discount %",
     totals: "Totals",
     discountTag: "(discount)",
     atLeastOne: "At least one line item is required.",
@@ -483,6 +515,10 @@ const i18n = {
     totalTax: "إجمالي الضريبة",
     totalGross: "الإجمالي الكلي",
     totalSaved: "🏷 إجمالي التوفير",
+    itemOriginalPrice: "السعر الأصلي",
+    itemDiscountedPrice: "السعر بعد الخصم",
+    itemDiscountPercent: "نسبة الخصم",
+    overallDiscountPercent: "نسبة الخصم الإجمالية",
     totals: "المجاميع",
     discountTag: "(خصم)",
     atLeastOne: "يجب إضافة عنصر واحد على الأقل.",
@@ -555,6 +591,7 @@ const StepHL         = { none:'none', tax:'tax', discount:'discount', result:'re
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
 const f = v => (+v).toFixed(2);
+const pct = v => `${(+v).toFixed(2).replace(/\.?0+$/, '')}%`;
 
 function header(label){ return { label, formula:'', value:null, isHeader:true, hl:StepHL.none }; }
 function step(label, formula, value, hl=StepHL.none){ return { label, formula, value, isHeader:false, hl }; }
@@ -649,7 +686,23 @@ function calcLine(item){
   steps.push(step(t('grossCustPays'), f(gross), gross, StepHL.result));
   if(discountAmount>0) steps.push(step(t('savedByDisc'), f(discountAmount), discountAmount, StepHL.discount));
 
-  return { basePrice:base, net, tax, gross, discountAmount, steps };
+  const displayDiscountPercentage = dv <= 0
+    ? 0
+    : item.discountType === DiscountType.percentage
+      ? dv
+      : (base > 0 ? (discountAmount / base) * 100 : 0);
+
+  return {
+    basePrice: base,
+    originalPriceWithoutTax: base,
+    discountedPriceWithoutTax: Math.max(base - discountAmount, 0),
+    displayDiscountPercentage,
+    net,
+    tax,
+    gross,
+    discountAmount,
+    steps,
+  };
 }
 
 function makeRunningLine(item, result){
@@ -774,12 +827,42 @@ function calculate(items, billDiscounts){
   const totalGross = runningLines.reduce((sum, line) => sum + line.gross, 0);
   const totalTax = totalGross-totalNet;
   const billDiscountAmount = subtotalGross-totalGross;
+  const activeDiscountsForPct = billDiscounts.filter(d => d.value > 0);
+  let billDiscountDisplayPercentage = 0;
+  if(subtotalNet > 0 && activeDiscountsForPct.length){
+    if(activeDiscountsForPct.length === 1 && activeDiscountsForPct[0].type === DiscountType.percentage){
+      billDiscountDisplayPercentage = activeDiscountsForPct[0].value;
+    } else {
+      let runningBase = subtotalNet;
+      let totalDiscOnNet = 0;
+      for(const d of activeDiscountsForPct){
+        const disc = d.type===DiscountType.percentage
+          ? runningBase * (d.value / 100)
+          : Math.min(d.value, runningBase);
+        totalDiscOnNet += disc;
+        runningBase = Math.max(runningBase - disc, 0);
+      }
+      billDiscountDisplayPercentage = (totalDiscOnNet / subtotalNet) * 100;
+    }
+  }
 
   if(activeDiscounts.length){
     billSteps.push(step(t('totalBillDisc'), `${f(subtotalGross)} − ${f(totalGross)}`, billDiscountAmount, StepHL.discount));
   }
 
-  return { lineResults, subtotalNet, subtotalTax, subtotalGross, billDiscountAmount, totalNet, totalTax, totalGross, totalSaved: itemSaved+billDiscountAmount, billSteps };
+  return {
+    lineResults,
+    subtotalNet,
+    subtotalTax,
+    subtotalGross,
+    billDiscountAmount,
+    billDiscountDisplayPercentage,
+    totalNet,
+    totalTax,
+    totalGross,
+    totalSaved: itemSaved + billDiscountAmount,
+    billSteps,
+  };
 }
 
 // ─── State ────────────────────────────────────────────────────────────────
@@ -808,6 +891,9 @@ function renderItems(result){
   const wrapper = document.getElementById('itemsWrapper');
   wrapper.innerHTML = items.map((item, idx) => {
     const lr = result.lineResults[idx];
+    const originalPrice = lr.originalPriceWithoutTax;
+    const discountedPrice = lr.discountedPriceWithoutTax;
+    const discountPercent = lr.displayDiscountPercentage;
 
     return `
 <div class="line-card" data-id="${item.id}">
@@ -868,6 +954,22 @@ function renderItems(result){
     </div>
   </div>
 
+  <!-- Row 3: always-visible discount summary -->
+  <div class="discount-display-row">
+    <div class="field">
+      <label>${t('itemOriginalPrice')}</label>
+      <div class="value">${f(originalPrice)}</div>
+    </div>
+    <div class="field">
+      <label>${t('itemDiscountedPrice')}</label>
+      <div class="value">${f(discountedPrice)}</div>
+    </div>
+    <div class="field">
+      <label>${t('itemDiscountPercent')}</label>
+      <div class="value discount-percent">${pct(discountPercent)}</div>
+    </div>
+  </div>
+
   <!-- Audit trail -->
   <div class="audit-trail">${stepsHtml(lr.steps)}</div>
 </div>`;
@@ -917,12 +1019,20 @@ function renderSummary(result){
   rows.push({ label:t('totalGross'), val:result.totalGross, cls:'bs-total total-row' });
   if(result.totalSaved>0)
     rows.push({ label:t('totalSaved'), val:result.totalSaved, cls:'saved-row' });
+  if(result.billDiscountAmount>0){
+    rows.push({
+      label: t('overallDiscountPercent'),
+      val: pct(result.billDiscountDisplayPercentage),
+      cls: 'disc-row',
+      isFormatted: true,
+    });
+  }
 
   document.getElementById('billSummary').innerHTML = `
 <div class="bs-header" data-i18n="totals">${t('totals')}</div>
 ${rows.map(r=>`<div class="bs-row ${r.cls}">
   <span>${r.label}</span>
-  <span class="bs-val">${f(Math.abs(r.val))}${r.val<0?' ' + t('discountTag') : ''}</span>
+  <span class="bs-val">${r.isFormatted ? r.val : `${f(Math.abs(r.val))}${r.val<0?' ' + t('discountTag') : ''}`}</span>
 </div>`).join('')}`;
 
   if(hasBillAudit){
