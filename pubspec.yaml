@@ -4,6 +4,8 @@ description: >
   (exclusive / inclusive / none), item-level discounts, and bill-level
   discounts with a full step-by-step audit trail.
 version: 1.0.0
+repository: https://github.com/AhmedRedagh/erp_calculator-main
+issue_tracker: https://github.com/AhmedRedagh/erp_calculator-main/issues
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

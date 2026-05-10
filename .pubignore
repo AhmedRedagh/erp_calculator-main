@@ -1,0 +1,5 @@
+demo.html
+pubspec.lock
+
+example/**
+!example/main.dart

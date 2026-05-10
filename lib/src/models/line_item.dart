@@ -83,8 +83,8 @@ class LineItem {
     bool clearDiscount = false,
     DiscountType? discountType,
     DiscountApplyOn? discountApplyOn,
-  }) {
-    return LineItem(
+  }) =>
+      LineItem(
       id: id ?? this.id,
       name: name ?? this.name,
       unitPrice: unitPrice ?? this.unitPrice,
@@ -96,7 +96,6 @@ class LineItem {
       discountType: discountType ?? this.discountType,
       discountApplyOn: discountApplyOn ?? this.discountApplyOn,
     );
-  }
 
   @override
   bool operator ==(Object other) =>

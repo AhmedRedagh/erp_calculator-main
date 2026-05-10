@@ -88,8 +88,8 @@ void main() {
 
       final line = result.lineResults.first;
       expect(line.gross, r(115));
-      expect(line.net, r(100));
-      expect(line.tax, r(15));
+      expect(r(line.net), r(100));
+      expect(r(line.tax), r(15));
     });
   });
 

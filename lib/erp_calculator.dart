@@ -36,6 +36,7 @@
 /// | `net`   | Discount is taken from the pre-tax price. Tax is re-applied on the reduced net. |
 library erp_calculator;
 
+export 'src/engine/billing_engine.dart';
 export 'src/enums/discount_apply_on.dart';
 export 'src/enums/discount_type.dart';
 export 'src/enums/tax_mode.dart';
@@ -44,4 +45,3 @@ export 'src/models/bill_result.dart';
 export 'src/models/calculation_step.dart';
 export 'src/models/line_item.dart';
 export 'src/models/line_item_result.dart';
-export 'src/engine/billing_engine.dart';

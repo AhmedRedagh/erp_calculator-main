@@ -49,14 +49,13 @@ class BillDiscount {
     double? value,
     DiscountType? type,
     DiscountApplyOn? applyOn,
-  }) {
-    return BillDiscount(
+  }) =>
+      BillDiscount(
       id: id ?? this.id,
       value: value ?? this.value,
       type: type ?? this.type,
       applyOn: applyOn ?? this.applyOn,
     );
-  }
 
   @override
   bool operator ==(Object other) =>

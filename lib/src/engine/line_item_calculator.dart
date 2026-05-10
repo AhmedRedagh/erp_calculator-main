@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_classes_with_only_static_members
+
 import '../enums/discount_apply_on.dart';
 import '../enums/discount_type.dart';
 import '../enums/tax_mode.dart';
