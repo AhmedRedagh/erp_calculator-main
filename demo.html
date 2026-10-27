@@ -307,6 +307,8 @@
     .bs-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 12px;
       padding: 9px 18px;
       font-size: 14px;
       border-bottom: 1px solid var(--border);
@@ -325,6 +327,14 @@
     .bs-row.disc-row   .bs-val { color: var(--discount); }
     .bs-row.saved-row  .bs-val { color: var(--saved); }
     .bs-row.total-row  .bs-val { color: var(--text); font-size: 17px; }
+    .bs-row .bs-hint {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .bs-row .bs-hint bdi { font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
 
     /* Bill-level audit */
     .bill-audit {
@@ -440,6 +450,11 @@ const i18n = {
     overallDiscountPercent: "Overall discount %",
     billDiscountPercent: "Bill discount % (of net)",
     billDiscountPercentOfSubtotal: "Bill discount % (of total after item discounts)",
+    hintTotalSaved: "What the customer really saved: total before discounts − final total =",
+    hintOverallPercent: "All savings (items + bill) out of the price before any discount:",
+    hintBillPercentOfNet: "Bill discount only, out of the pre-tax net after item discounts:",
+    hintBillPercentEntered: "Bill discount only: the percentage you entered",
+    hintBillPercentOfSubtotal: "Bill discount only, out of the bill total after item discounts:",
     originalGross: "Original total (before discounts)",
     totals: "Totals",
     discountTag: "(discount)",
@@ -529,6 +544,11 @@ const i18n = {
     overallDiscountPercent: "نسبة الخصم الإجمالية",
     billDiscountPercent: "نسبة خصم الفاتورة (من الصافي)",
     billDiscountPercentOfSubtotal: "نسبة خصم الفاتورة (من الإجمالي بعد خصم العناصر)",
+    hintTotalSaved: "ما وفّره العميل فعلياً: الإجمالي قبل الخصومات − الإجمالي الكلي =",
+    hintOverallPercent: "كل التوفير (العناصر + الفاتورة) من السعر قبل أي خصم:",
+    hintBillPercentOfNet: "خصم الفاتورة فقط، من الصافي قبل الضريبة بعد خصم العناصر:",
+    hintBillPercentEntered: "خصم الفاتورة فقط: النسبة المُدخلة",
+    hintBillPercentOfSubtotal: "خصم الفاتورة فقط، من إجمالي الفاتورة بعد خصم العناصر:",
     originalGross: "الإجمالي قبل الخصومات",
     totals: "المجاميع",
     discountTag: "(خصم)",
@@ -1073,24 +1093,40 @@ function renderSummary(result){
   rows.push({ label:t('totalNet'),  val:result.totalNet,   cls:'' });
   rows.push({ label:t('totalTax'),  val:result.totalTax,   cls:'tax-row' });
   rows.push({ label:t('totalGross'), val:result.totalGross, cls:'bs-total total-row' });
+  // Short plain-language explanation plus the live numbers behind the value.
+  const hint = (key, formula) => `${t(key)} <bdi dir="ltr">${formula}</bdi>`;
+
   if(result.totalSaved>0){
-    rows.push({ label:t('totalSaved'), val:result.totalSaved, cls:'saved-row' });
+    rows.push({
+      label: t('totalSaved'),
+      hint: hint('hintTotalSaved', `${f(result.originalGross)} − ${f(result.totalGross)}`),
+      val: result.totalSaved,
+      cls: 'saved-row',
+    });
     rows.push({
       label: t('overallDiscountPercent'),
+      hint: hint('hintOverallPercent', `${f(result.totalSaved)} ÷ ${f(result.originalGross)}`),
       val: pct(result.overallDiscountPercentage),
       cls: 'disc-row',
       isFormatted: true,
     });
   }
   if(result.billDiscountAmount>0){
+    // Matches the engine: a single % bill discount reports the entered %.
+    const singlePct = billDiscounts.filter(d => d.value > 0).length === 1
+      && billDiscounts.find(d => d.value > 0).type === DiscountType.percentage;
     rows.push({
       label: t('billDiscountPercent'),
+      hint: singlePct
+        ? t('hintBillPercentEntered')
+        : hint('hintBillPercentOfNet', `${f(result.billDiscountAmount)} ÷ ${f(result.subtotalNet)}`),
       val: pct(result.billDiscountDisplayPercentage),
       cls: 'disc-row',
       isFormatted: true,
     });
     rows.push({
       label: t('billDiscountPercentOfSubtotal'),
+      hint: hint('hintBillPercentOfSubtotal', `${f(result.billDiscountAmount)} ÷ ${f(result.subtotalGross)}`),
       val: pct(result.billDiscountPercentageOfSubtotalGross),
       cls: 'disc-row',
       isFormatted: true,
@@ -1100,7 +1136,7 @@ function renderSummary(result){
   document.getElementById('billSummary').innerHTML = `
 <div class="bs-header" data-i18n="totals">${t('totals')}</div>
 ${rows.map(r=>`<div class="bs-row ${r.cls}">
-  <span>${r.label}</span>
+  <span>${r.label}${r.hint ? `<span class="bs-hint">${r.hint}</span>` : ''}</span>
   <span class="bs-val">${r.isFormatted ? r.val : `${f(Math.abs(r.val))}${r.val<0?' ' + t('discountTag') : ''}`}</span>
 </div>`).join('')}`;
 
