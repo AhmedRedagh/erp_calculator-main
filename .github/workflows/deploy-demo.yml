@@ -20,7 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
-      - run: dart pub get
+      # example/ is a Flutter app; the runner only has the Dart SDK.
+      - run: dart pub get --no-example
       - run: dart analyze lib test
       - run: dart test
 
