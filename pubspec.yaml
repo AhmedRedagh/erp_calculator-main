@@ -3,7 +3,7 @@ description: >
   A pure-Dart, stateless billing calculation engine that handles tax modes
   (exclusive / inclusive / none), item-level discounts, and bill-level
   discounts with a full step-by-step audit trail.
-version: 1.0.0
+version: 1.1.0
 repository: https://github.com/AhmedRedagh/erp_calculator-main
 issue_tracker: https://github.com/AhmedRedagh/erp_calculator-main/issues
 

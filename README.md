@@ -179,14 +179,20 @@ void main() {
 
 | Field | Description |
 | --- | --- |
+| `originalGross` | Tax-included total before any discount |
+| `itemDiscountImpactOnGross` | Gross reduction from item discounts: `originalGross - subtotalGross` |
 | `subtotalNet` | Net total after item discounts, before bill discounts |
 | `subtotalTax` | Tax total after item discounts, before bill discounts |
 | `subtotalGross` | Gross total after item discounts, before bill discounts |
-| `billDiscountAmount` | Total saved from bill-level discounts |
+| `billDiscountAmount` | Bill discount taken from its apply-on basis (pre-tax when applied on net) |
+| `billDiscountImpactOnGross` | Gross reduction from bill discounts: `subtotalGross - totalGross` |
+| `billDiscountDisplayPercentage` | Bill discount as a % of `subtotalNet` (excludes item discounts) |
+| `billDiscountPercentageOfSubtotalGross` | Bill discount as a % of the bill after item discounts: `billDiscountAmount / subtotalGross × 100` |
 | `totalNet` | Final net amount |
 | `totalTax` | Final tax amount |
 | `totalGross` | Final amount the customer pays |
-| `totalSaved` | Total savings from item and bill discounts |
+| `totalSaved` | What the customer actually saves: `originalGross - totalGross` |
+| `overallDiscountPercentage` | `totalSaved / originalGross × 100` |
 | `lineResults` | Per-item breakdown |
 | `billSteps` | Audit trail for bill-level discounts |
 
@@ -195,10 +201,12 @@ Each `LineItemResult` includes:
 | Field | Description |
 | --- | --- |
 | `basePrice` | `unitPrice * qty` |
+| `originalGross` | Tax-included line price before the item discount |
 | `net` | Final net amount for the line |
 | `tax` | Tax amount for the line |
 | `gross` | Final line total |
-| `discountAmount` | Saved amount on the line |
+| `discountAmount` | Discount taken from its apply-on basis (pre-tax when applied on net) |
+| `discountImpactOnGross` | What the customer saves on the line: `originalGross - gross` |
 | `steps` | Full audit trail |
 
 ## Audit trail

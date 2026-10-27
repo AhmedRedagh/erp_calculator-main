@@ -11,6 +11,12 @@ class LineItemResult {
   /// Raw price before any tax or discount: `unitPrice × qty`.
   final double basePrice;
 
+  /// Tax-included price before the item discount.
+  ///
+  /// Equals [basePrice] for inclusive and no-tax lines, and
+  /// `basePrice × (1 + taxRate)` for exclusive lines.
+  final double originalGross;
+
   /// Pre-tax amount after discounts are applied.
   final double net;
 
@@ -20,7 +26,11 @@ class LineItemResult {
   /// Amount the customer actually pays: `net + tax`.
   final double gross;
 
-  /// Total discount saved on this line (always ≥ 0).
+  /// Discount amount taken from the configured apply-on basis (always ≥ 0).
+  ///
+  /// When the discount applies on `net`, this is a pre-tax amount and the
+  /// customer saves more than this, because tax is re-applied on the reduced
+  /// net. Use [discountImpactOnGross] for what the customer actually saves.
   final double discountAmount;
 
   /// Discount percentage intended for display in UI.
@@ -36,6 +46,7 @@ class LineItemResult {
 
   const LineItemResult({
     required this.basePrice,
+    required this.originalGross,
     required this.net,
     required this.tax,
     required this.gross,
@@ -53,12 +64,17 @@ class LineItemResult {
         basePrice,
       );
 
+  /// Reduction in the customer-paid amount caused by the item discount:
+  /// `originalGross - gross`.
+  double get discountImpactOnGross => originalGross - gross;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is LineItemResult &&
           runtimeType == other.runtimeType &&
           basePrice == other.basePrice &&
+          originalGross == other.originalGross &&
           net == other.net &&
           tax == other.tax &&
           gross == other.gross &&
@@ -69,6 +85,7 @@ class LineItemResult {
   int get hashCode =>
       Object.hash(
         basePrice,
+        originalGross,
         net,
         tax,
         gross,
@@ -78,6 +95,7 @@ class LineItemResult {
 
   @override
   String toString() => 'LineItemResult('
+      'originalGross: $originalGross, '
       'net: $net, '
       'tax: $tax, '
       'gross: $gross, '

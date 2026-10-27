@@ -16,6 +16,7 @@ abstract final class LineItemCalculator {
 
     final basePrice = _computeBasePrice(item, steps);
     var (:net, :tax, :gross) = _computeTax(item, basePrice, taxRate, steps);
+    final originalGross = gross;
     var discountAmount = 0.0;
 
     final dv = item.discountValue ?? 0;
@@ -46,6 +47,7 @@ abstract final class LineItemCalculator {
 
     return LineItemResult(
       basePrice: basePrice,
+      originalGross: originalGross,
       net: net,
       tax: tax,
       gross: gross,

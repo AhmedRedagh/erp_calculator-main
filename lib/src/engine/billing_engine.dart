@@ -26,8 +26,8 @@ abstract final class BillingEngine {
     final subtotalNet = lineResults.fold(0.0, (sum, r) => sum + r.net);
     final subtotalTax = lineResults.fold(0.0, (sum, r) => sum + r.tax);
     final subtotalGross = lineResults.fold(0.0, (sum, r) => sum + r.gross);
-    final itemDiscountSavings =
-        lineResults.fold(0.0, (sum, r) => sum + r.discountAmount);
+    final originalGross =
+        lineResults.fold(0.0, (sum, r) => sum + r.originalGross);
 
     final (:totalNet, :totalGross, :billSteps) = _applyBillDiscounts(
       items: items,
@@ -46,19 +46,27 @@ abstract final class BillingEngine {
       billDiscounts: billDiscounts,
       subtotalNet: subtotalNet,
     );
+    final totalSaved = originalGross - totalGross;
 
     return BillResult(
       lineResults: lineResults,
+      originalGross: originalGross,
+      itemDiscountImpactOnGross: originalGross - subtotalGross,
       subtotalNet: subtotalNet,
       subtotalTax: subtotalTax,
       subtotalGross: subtotalGross,
       billDiscountAmount: billDiscountAmount,
       billDiscountImpactOnGross: billDiscountImpactOnGross,
       billDiscountDisplayPercentage: billDiscountDisplayPercentage,
+      billDiscountPercentageOfSubtotalGross: subtotalGross > 0
+          ? (billDiscountAmount / subtotalGross) * 100
+          : 0.0,
       totalNet: totalNet,
       totalTax: totalTax,
       totalGross: totalGross,
-      totalSaved: itemDiscountSavings + billDiscountAmount,
+      totalSaved: totalSaved,
+      overallDiscountPercentage:
+          originalGross > 0 ? (totalSaved / originalGross) * 100 : 0.0,
       billSteps: billSteps,
     );
   }

@@ -378,6 +378,229 @@ void main() {
     });
   });
 
+  group('Savings and overall discount', () {
+    test('originalGross is the tax-included price before any discount', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'Exclusive',
+            unitPrice: 100,
+            qty: 2,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+            discountValue: 10,
+          ),
+          const LineItem(
+            id: '2',
+            name: 'Inclusive',
+            unitPrice: 115,
+            qty: 1,
+            taxMode: TaxMode.inclusive,
+            taxRate: 15,
+          ),
+          const LineItem(
+            id: '3',
+            name: 'No tax',
+            unitPrice: 50,
+            qty: 1,
+            taxMode: TaxMode.none,
+          ),
+        ],
+        billDiscounts: [],
+      );
+
+      expect(r(result.lineResults[0].originalGross), r(230));
+      expect(r(result.lineResults[1].originalGross), r(115));
+      expect(r(result.lineResults[2].originalGross), r(50));
+      expect(r(result.originalGross), r(395));
+    });
+
+    test('no discounts means nothing saved', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+          ),
+        ],
+        billDiscounts: [],
+      );
+
+      expect(r(result.originalGross), r(result.totalGross));
+      expect(r(result.itemDiscountImpactOnGross), r(0));
+      expect(r(result.totalSaved), r(0));
+      expect(r(result.overallDiscountPercentage), r(0));
+      expect(r(result.billDiscountPercentageOfSubtotalGross), r(0));
+    });
+
+    test('bill discount % of subtotal gross matches a % discount on gross', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+            discountValue: 10,
+          ),
+        ],
+        billDiscounts: [
+          const BillDiscount(
+            id: 'BD1',
+            value: 5,
+            type: DiscountType.percentage,
+            applyOn: DiscountApplyOn.gross,
+          ),
+        ],
+      );
+
+      expect(r(result.subtotalGross), r(207));
+      expect(r(result.billDiscountPercentageOfSubtotalGross), r(5));
+    });
+
+    test('item discount on net counts the tax it removes', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 200,
+            qty: 1,
+            taxMode: TaxMode.exclusive,
+            taxRate: 15,
+            discountValue: 10,
+            discountType: DiscountType.percentage,
+            discountApplyOn: DiscountApplyOn.net,
+          ),
+        ],
+        billDiscounts: [],
+      );
+
+      final line = result.lineResults.first;
+      expect(r(line.discountAmount), r(20));
+      expect(r(line.discountImpactOnGross), r(23));
+      expect(r(result.itemDiscountImpactOnGross), r(23));
+      expect(r(result.totalSaved), r(23));
+      expect(r(result.overallDiscountPercentage), r(10));
+    });
+
+    test('item discounts plus fixed bill discount on net', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'Product A',
+            unitPrice: 100,
+            qty: 2,
+            taxMode: TaxMode.inclusive,
+            taxRate: 15,
+            discountValue: 50,
+            discountType: DiscountType.percentage,
+            discountApplyOn: DiscountApplyOn.gross,
+          ),
+          const LineItem(
+            id: '2',
+            name: 'gh',
+            unitPrice: 200,
+            qty: 2,
+            taxMode: TaxMode.inclusive,
+            taxRate: 15,
+            discountValue: 50,
+            discountType: DiscountType.percentage,
+            discountApplyOn: DiscountApplyOn.gross,
+          ),
+        ],
+        billDiscounts: [
+          const BillDiscount(
+            id: 'BD1',
+            value: 150,
+            type: DiscountType.fixed,
+            applyOn: DiscountApplyOn.net,
+          ),
+        ],
+      );
+
+      // Core totals are unchanged by this fix.
+      expect(r(result.subtotalNet), r(260.87));
+      expect(r(result.subtotalGross), r(300));
+      expect(r(result.totalNet), r(110.87));
+      expect(r(result.totalTax), r(16.63));
+      expect(r(result.totalGross), r(127.50));
+      expect(r(result.billDiscountAmount), r(150));
+      expect(r(result.billDiscountDisplayPercentage), r(57.50));
+      expect(r(result.billDiscountPercentageOfSubtotalGross), r(50));
+
+      expect(r(result.originalGross), r(600));
+      expect(r(result.itemDiscountImpactOnGross), r(300));
+      expect(r(result.billDiscountImpactOnGross), r(172.50));
+      expect(r(result.totalSaved), r(472.50));
+      expect(r(result.overallDiscountPercentage), r(78.75));
+    });
+
+    test('totalSaved always equals originalGross - totalGross', () {
+      final result = BillingEngine.calculate(
+        items: [
+          const LineItem(
+            id: '1',
+            name: 'A',
+            unitPrice: 80,
+            qty: 3,
+            taxMode: TaxMode.exclusive,
+            taxRate: 5,
+            discountValue: 12,
+            discountType: DiscountType.fixed,
+            discountApplyOn: DiscountApplyOn.net,
+          ),
+          const LineItem(
+            id: '2',
+            name: 'B',
+            unitPrice: 57.5,
+            qty: 2,
+            taxMode: TaxMode.inclusive,
+            taxRate: 15,
+            discountValue: 20,
+            discountType: DiscountType.percentage,
+            discountApplyOn: DiscountApplyOn.gross,
+          ),
+        ],
+        billDiscounts: [
+          const BillDiscount(
+            id: 'BD1',
+            value: 10,
+            type: DiscountType.percentage,
+            applyOn: DiscountApplyOn.gross,
+          ),
+          const BillDiscount(
+            id: 'BD2',
+            value: 25,
+            type: DiscountType.fixed,
+            applyOn: DiscountApplyOn.net,
+          ),
+        ],
+      );
+
+      expect(
+        r(result.totalSaved),
+        r(result.originalGross - result.totalGross),
+      );
+      expect(
+        r(result.totalSaved),
+        r(result.itemDiscountImpactOnGross + result.billDiscountImpactOnGross),
+      );
+      expect(
+        r(result.overallDiscountPercentage),
+        r(result.totalSaved / result.originalGross * 100),
+      );
+    });
+  });
+
   group('Validation', () {
     test('throws ArgumentError for empty items list', () {
       expect(

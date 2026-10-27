@@ -438,6 +438,9 @@ const i18n = {
     itemDiscountedPrice: "Discounted price",
     itemDiscountPercent: "Discount %",
     overallDiscountPercent: "Overall discount %",
+    billDiscountPercent: "Bill discount % (of net)",
+    billDiscountPercentOfSubtotal: "Bill discount % (of total after item discounts)",
+    originalGross: "Original total (before discounts)",
     totals: "Totals",
     discountTag: "(discount)",
     atLeastOne: "At least one line item is required.",
@@ -477,6 +480,11 @@ const i18n = {
     discGrossTotal: "Discount % of gross total",
     discNetTotal: "Discount % of net total",
     totalBillDisc: "Total bill discount saved",
+    discAmtOnGross: "Discount amount on gross",
+    discAmtOnNet: "Discount amount on net",
+    newGrossTotal: "New gross total",
+    newNetTotal: "New net total",
+    newGrossAfterTax: "New gross total after recalculating line taxes",
   },
   ar: {
     headerTitle: "حاسبة تخطيط موارد المؤسسات",
@@ -519,6 +527,9 @@ const i18n = {
     itemDiscountedPrice: "السعر بعد الخصم",
     itemDiscountPercent: "نسبة الخصم",
     overallDiscountPercent: "نسبة الخصم الإجمالية",
+    billDiscountPercent: "نسبة خصم الفاتورة (من الصافي)",
+    billDiscountPercentOfSubtotal: "نسبة خصم الفاتورة (من الإجمالي بعد خصم العناصر)",
+    originalGross: "الإجمالي قبل الخصومات",
     totals: "المجاميع",
     discountTag: "(خصم)",
     atLeastOne: "يجب إضافة عنصر واحد على الأقل.",
@@ -558,6 +569,11 @@ const i18n = {
     discGrossTotal: "نسبة الخصم من الإجمالي الكلي",
     discNetTotal: "نسبة الخصم من الصافي الكلي",
     totalBillDisc: "إجمالي خصومات الفاتورة الموفرة",
+    discAmtOnGross: "مبلغ الخصم من الإجمالي",
+    discAmtOnNet: "مبلغ الخصم من الصافي",
+    newGrossTotal: "الإجمالي الجديد",
+    newNetTotal: "الصافي الجديد",
+    newGrossAfterTax: "الإجمالي الجديد بعد إعادة حساب الضريبة",
   }
 };
 
@@ -627,6 +643,8 @@ function calcLine(item){
     steps.push(step(t('taxEqGrossMinus'), `${f(gross)} − ${f(net)} = ${f(tax)}`, tax, StepHL.tax));
   }
 
+  const originalGross = gross;
+
   // STEP 3 — DISCOUNT
   let discountAmount = 0;
   const dv = item.discountValue || 0;
@@ -694,6 +712,7 @@ function calcLine(item){
 
   return {
     basePrice: base,
+    originalGross,
     originalPriceWithoutTax: base,
     discountedPriceWithoutTax: Math.max(base - discountAmount, 0),
     displayDiscountPercentage,
@@ -763,7 +782,7 @@ function calculate(items, billDiscounts){
   const subtotalNet   = lineResults.reduce((s,r)=>s+r.net,  0);
   const subtotalTax   = lineResults.reduce((s,r)=>s+r.tax,  0);
   const subtotalGross = lineResults.reduce((s,r)=>s+r.gross,0);
-  const itemSaved     = lineResults.reduce((s,r)=>s+r.discountAmount,0);
+  const originalGross = lineResults.reduce((s,r)=>s+r.originalGross,0);
   const runningLines  = items.map((item, index) => makeRunningLine(item, lineResults[index]));
   const billSteps  = [];
   const activeDiscounts = billDiscounts.filter(d => d.value > 0);
@@ -788,7 +807,7 @@ function calculate(items, billDiscounts){
     }
 
     billSteps.push(step(
-      d.applyOn === DiscountApplyOn.gross ? 'Discount amount on gross' : 'Discount amount on net',
+      d.applyOn === DiscountApplyOn.gross ? t('discAmtOnGross') : t('discAmtOnNet'),
       f(discAmt),
       discAmt,
       StepHL.discount,
@@ -805,8 +824,8 @@ function calculate(items, billDiscounts){
 
       const newGross = runningLines.reduce((sum, line) => sum + line.gross, 0);
       const newNet = runningLines.reduce((sum, line) => sum + line.net, 0);
-      billSteps.push(step('New gross total', `${f(base)} − ${f(discAmt)} = ${f(newGross)}`, newGross));
-      billSteps.push(step('New net total', f(newNet), newNet));
+      billSteps.push(step(t('newGrossTotal'), `${f(base)} − ${f(discAmt)} = ${f(newGross)}`, newGross));
+      billSteps.push(step(t('newNetTotal'), f(newNet), newNet));
     } else {
       allocateAcrossLines(
         runningLines,
@@ -819,7 +838,7 @@ function calculate(items, billDiscounts){
       const newNet = runningLines.reduce((sum, line) => sum + line.net, 0);
       const newGross = runningLines.reduce((sum, line) => sum + line.gross, 0);
       billSteps.push(step(`${t('newNetEq')} = ${f(base)} − ${f(discAmt)}`, `= ${f(newNet)}`, newNet));
-      billSteps.push(step('New gross total after recalculating line taxes', f(newGross), newGross, StepHL.tax));
+      billSteps.push(step(t('newGrossAfterTax'), f(newGross), newGross, StepHL.tax));
     }
   }
 
@@ -864,21 +883,29 @@ function calculate(items, billDiscounts){
     }
   }
 
+  const billDiscountImpactOnGross = subtotalGross - totalGross;
   if(activeDiscounts.length){
-    billSteps.push(step(t('totalBillDisc'), `${f(subtotalGross)} − ${f(totalGross)}`, billDiscountAmount, StepHL.discount));
+    billSteps.push(step(t('totalBillDisc'), `${f(subtotalGross)} − ${f(totalGross)}`, billDiscountImpactOnGross, StepHL.discount));
   }
+
+  const totalSaved = originalGross - totalGross;
 
   return {
     lineResults,
+    originalGross,
+    itemDiscountImpactOnGross: originalGross - subtotalGross,
     subtotalNet,
     subtotalTax,
     subtotalGross,
     billDiscountAmount,
+    billDiscountImpactOnGross,
     billDiscountDisplayPercentage,
+    billDiscountPercentageOfSubtotalGross: subtotalGross > 0 ? (billDiscountAmount / subtotalGross) * 100 : 0,
     totalNet,
     totalTax,
     totalGross,
-    totalSaved: itemSaved + billDiscountAmount,
+    totalSaved,
+    overallDiscountPercentage: originalGross > 0 ? (totalSaved / originalGross) * 100 : 0,
     billSteps,
   };
 }
@@ -905,21 +932,19 @@ function stepsHtml(steps){
   }).join('');
 }
 
-function renderItems(result){
-  const wrapper = document.getElementById('itemsWrapper');
-  wrapper.innerHTML = items.map((item, idx) => {
-    const lr = result.lineResults[idx];
-    const originalPrice = lr.originalPriceWithoutTax;
-    const discountedPrice = lr.discountedPriceWithoutTax;
-    const discountPercent = lr.displayDiscountPercentage;
+const escapeAttr = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 
-    return `
+// Builds the card inputs. Only called when the set of items or the language
+// changes, so the input being typed in is never replaced mid-edit.
+function renderItems(){
+  const wrapper = document.getElementById('itemsWrapper');
+  wrapper.innerHTML = items.map(item => `
 <div class="line-card" data-id="${item.id}">
   <!-- Row 1: main inputs -->
   <div class="line-inputs">
     <div class="field">
       <label>${t('name')}</label>
-      <input type="text" placeholder="${t('productName')}" value="${item.name}"
+      <input type="text" placeholder="${t('productName')}" value="${escapeAttr(item.name)}"
         onchange="updateItem('${item.id}','name',this.value)" />
     </div>
     <div class="field">
@@ -972,26 +997,36 @@ function renderItems(result){
     </div>
   </div>
 
-  <!-- Row 3: always-visible discount summary -->
-  <div class="discount-display-row">
+  <!-- Row 3: always-visible discount summary (filled by renderItemOutputs) -->
+  <div class="discount-display-row"></div>
+
+  <!-- Audit trail (filled by renderItemOutputs) -->
+  <div class="audit-trail"></div>
+</div>`).join('');
+}
+
+// Refreshes only the computed parts of each card, leaving inputs untouched.
+function renderItemOutputs(result){
+  items.forEach((item, idx) => {
+    const card = document.querySelector(`.line-card[data-id="${item.id}"]`);
+    if(!card) return;
+    const lr = result.lineResults[idx];
+
+    card.querySelector('.discount-display-row').innerHTML = `
     <div class="field">
       <label>${t('itemOriginalPrice')}</label>
-      <div class="value">${f(originalPrice)}</div>
+      <div class="value">${f(lr.originalPriceWithoutTax)}</div>
     </div>
     <div class="field">
       <label>${t('itemDiscountedPrice')}</label>
-      <div class="value">${f(discountedPrice)}</div>
+      <div class="value">${f(lr.discountedPriceWithoutTax)}</div>
     </div>
     <div class="field">
       <label>${t('itemDiscountPercent')}</label>
-      <div class="value discount-percent">${pct(discountPercent)}</div>
-    </div>
-  </div>
-
-  <!-- Audit trail -->
-  <div class="audit-trail">${stepsHtml(lr.steps)}</div>
-</div>`;
-  }).join('');
+      <div class="value discount-percent">${pct(lr.displayDiscountPercentage)}</div>
+    </div>`;
+    card.querySelector('.audit-trail').innerHTML = stepsHtml(lr.steps);
+  });
 }
 
 function renderBillDiscounts(){
@@ -1025,22 +1060,38 @@ function renderBillDiscounts(){
 function renderSummary(result){
   const hasBillAudit = result.billSteps.length > 0;
   const billAuditEl  = document.getElementById('billAudit');
-  const rows = [
+  const rows = [];
+  if(result.totalSaved>0)
+    rows.push({ label:t('originalGross'), val:result.originalGross, cls:'' });
+  rows.push(
     { label:t('subtotalNet'),  val:result.subtotalNet,   cls:'' },
     { label:t('subtotalTax'),  val:result.subtotalTax,   cls:'tax-row' },
     { label:t('subtotalGross'),val:result.subtotalGross, cls:'' },
-  ];
+  );
   if(result.billDiscountAmount>0)
     rows.push({ label:t('billDiscountLabel'), val:-result.billDiscountAmount, cls:'disc-row' });
   rows.push({ label:t('totalNet'),  val:result.totalNet,   cls:'' });
   rows.push({ label:t('totalTax'),  val:result.totalTax,   cls:'tax-row' });
   rows.push({ label:t('totalGross'), val:result.totalGross, cls:'bs-total total-row' });
-  if(result.totalSaved>0)
+  if(result.totalSaved>0){
     rows.push({ label:t('totalSaved'), val:result.totalSaved, cls:'saved-row' });
-  if(result.billDiscountAmount>0){
     rows.push({
       label: t('overallDiscountPercent'),
+      val: pct(result.overallDiscountPercentage),
+      cls: 'disc-row',
+      isFormatted: true,
+    });
+  }
+  if(result.billDiscountAmount>0){
+    rows.push({
+      label: t('billDiscountPercent'),
       val: pct(result.billDiscountDisplayPercentage),
+      cls: 'disc-row',
+      isFormatted: true,
+    });
+    rows.push({
+      label: t('billDiscountPercentOfSubtotal'),
+      val: pct(result.billDiscountPercentageOfSubtotalGross),
       cls: 'disc-row',
       isFormatted: true,
     });
@@ -1062,17 +1113,24 @@ ${rows.map(r=>`<div class="bs-row ${r.cls}">
 }
 
 // ─── Main render ─────────────────────────────────────────────────────────
+// Full rebuild: boot, add/remove, language switch.
 function render(){
-  const result = calculate(items, billDiscounts);
-  renderItems(result);
+  renderItems();
   renderBillDiscounts();
+  refresh();
+}
+
+// Recalculate and update computed output only. Used while typing.
+function refresh(){
+  const result = calculate(items, billDiscounts);
+  renderItemOutputs(result);
   renderSummary(result);
 }
 
 // ─── Mutations ───────────────────────────────────────────────────────────
 function updateItem(id, field, value){
   items = items.map(i => i.id===id ? {...i, [field]:value} : i);
-  render();
+  refresh();
 }
 function removeItem(id){
   if(items.length===1){ alert(t('atLeastOne')); return; }
@@ -1081,7 +1139,7 @@ function removeItem(id){
 }
 function updateBD(id, field, value){
   billDiscounts = billDiscounts.map(d=>d.id===id ? {...d,[field]:value} : d);
-  render();
+  refresh();
 }
 function removeBD(id){
   billDiscounts = billDiscounts.filter(d=>d.id!==id);
